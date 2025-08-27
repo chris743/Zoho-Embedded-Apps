@@ -15,7 +15,7 @@ import { WeeklyPlannerBoard } from "../components/WeeklyPlannerBoard";
 
 export default function HarvestPlannerPage() {
     const [weekStart, setWeekStart] = useState(new Date());
-    const [apiBase, setApiBase] = useState(() => localStorage.getItem("apiBase") || "https://localhost:7084/api/v1");
+    const [apiBase, setApiBase] = useState(() => localStorage.getItem("apiBase") || "https://api.cobblestonecloud.com/api/v1");
     const [jwt, setJwt] = useState(() => localStorage.getItem("jwt") || "");
     const api = useMemo(() => makeApi(apiBase, jwt), [apiBase, jwt]);
     const svc = useMemo(() => HarvestPlansApi(api), [api]);

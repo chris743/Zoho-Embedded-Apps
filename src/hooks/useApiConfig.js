@@ -3,7 +3,7 @@ import { makeApi } from "../api/client";
 
 
 export function useApiConfig() {
-const [apiBase, setApiBase] = useState(() => localStorage.getItem("apiBase") || "https://api.cobblestonecloud.com");
+const [apiBase, setApiBase] = useState(() => localStorage.getItem("apiBase") || "https://api.cobblestonecloud.com/api/v1");
 const [jwt, setJwt] = useState(() => localStorage.getItem("jwt") || "");
 const api = useMemo(() => makeApi(apiBase, jwt), [apiBase, jwt]);
 const save = () => {
