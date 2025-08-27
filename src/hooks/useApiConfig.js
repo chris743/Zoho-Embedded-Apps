@@ -1,0 +1,14 @@
+import { useMemo, useState } from "react";
+import { makeApi } from "../api/client";
+
+
+export function useApiConfig() {
+const [apiBase, setApiBase] = useState(() => localStorage.getItem("apiBase") || "https://localhost:7084/api/v1");
+const [jwt, setJwt] = useState(() => localStorage.getItem("jwt") || "");
+const api = useMemo(() => makeApi(apiBase, jwt), [apiBase, jwt]);
+const save = () => {
+localStorage.setItem("apiBase", apiBase);
+localStorage.setItem("jwt", jwt);
+};
+return { apiBase, setApiBase, jwt, setJwt, api, save };
+}

@@ -1,49 +1,42 @@
 import React from "react";
-import {BrowserRouter, Routes, Route, Link, useLocation} from "react-router-dom";
-import {
-  AppBar,
-  Toolbar,
-  Tabs,
-  Tab,
-  Typography,
-  Container,
-} from "@mui/material";
-import HomeIcon from "@mui/icons-material/Home";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { AppBar, Toolbar, Typography, Stack, Button, Box, Container } from "@mui/material";
+import HarvestContractorsPage from "./pages/HarvestContractorsPage";
+import HarvestPlannerPage from "./pages/HarvestPlannerPage";
 
-import Home from "./pages/Home"
-import HarvestPlanPage from "./pages/HarvestPlanPage"
-
-function NavTabs() {
-  const location = useLocation();
-  const value = location.pathname.startswith("/planned") ? 1 : 0;
-  return (
-    <Tabs value={value} aria-label="nav tabs">
-      <Tab label="Home" component={Link} to="/"/>
-      <Tab label="Planned Harvests" component={Link} to="/planned"/>
-    </Tabs>
-  );
+function Home() {
+return (
+<Container sx={{ py: 3 }}>
+<Typography variant="h4" gutterBottom>Welcome to Cobblestone Maintenance</Typography>
+<Typography>Select a section from the nav bar above.</Typography>
+</Container>
+);
 }
 
-export default function App(){
-  return(
-    <BrowserRouter>
-      <AppBar>
-        <Toolbar>
-          <HomeIcon>
-            <Typography>
-              Cobblestone Fruit
-            </Typography>
-            <NavTabs/>
-          </HomeIcon>
-        </Toolbar>
-      </AppBar>
 
-      <Container>
-        <Routes>
-          <Route path="/" element={<Home/>}/>
-          <Route path="/planned" element={<HarvestPlanPage/>} />
-        </Routes>
-      </Container>
-    </BrowserRouter>
-  );
+export default function App() {
+return (
+<Router>
+<Box sx={{ flexGrow: 1 }}>
+<AppBar position="static" sx={{ bgcolor: "#0f172a" }}>
+<Toolbar>
+<Typography variant="h6" sx={{ flexGrow: 1 }}>Cobblestone Maintenance</Typography>
+<Stack direction="row" spacing={2}>
+<Button color="inherit" component={Link} to="/">Home</Button>
+<Button color="inherit" component={Link} to="/harvestcontractors">Harvest Contractors</Button>
+<Button color="inherit" component={Link} to="/harvestplans">Harvest plans</Button>
+</Stack>
+</Toolbar>
+</AppBar>
+
+
+<Routes>
+<Route path="/" element={<Home />} />
+<Route path="/harvestcontractors" element={<HarvestContractorsPage />} />
+<Route path="/harvestplans" element={<HarvestPlannerPage />} />
+
+</Routes>
+</Box>
+</Router>
+);
 }
