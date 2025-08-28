@@ -100,7 +100,7 @@ export function WeeklyPlannerBoard({
   }, [plans, dayKeys, lookupMaps, svc]);
 
   return (
-    <Paper sx={{ p: 2 }}>
+    <Paper sx={{ p: 1.5 }}>
       <WeekHeader 
         days={days} 
         onWeekChange={handleWeekChange}
@@ -110,7 +110,7 @@ export function WeeklyPlannerBoard({
         <Box sx={{ 
           display: "grid", 
           gridTemplateColumns: "repeat(7, 1fr)", 
-          gap: 2, 
+          gap: 1, 
           alignItems: "flex-start" 
         }}>
           {days.map((day) => {
@@ -139,31 +139,31 @@ const WeekHeader = React.memo(({ days, onWeekChange }) => (
       display: "flex", 
       alignItems: "center", 
       justifyContent: "space-between", 
-      mb: 1 
+      mb: 0.5 
     }}>
-      <Typography variant="h6">
+      <Typography variant="subtitle1" fontSize="1rem">
         Week of {formatRangeLabel(days[0], days[6])}
       </Typography>
       <Box>
-        <IconButton onClick={onWeekChange.prev} aria-label="Previous week">
+        <IconButton size="small" onClick={onWeekChange.prev} aria-label="Previous week">
           <ChevronLeftIcon />
         </IconButton>
-        <IconButton onClick={onWeekChange.today} aria-label="Current week">
+        <IconButton size="small" onClick={onWeekChange.today} aria-label="Current week">
           <TodayIcon />
         </IconButton>
-        <IconButton onClick={onWeekChange.next} aria-label="Next week">
+        <IconButton size="small" onClick={onWeekChange.next} aria-label="Next week">
           <ChevronRightIcon />
         </IconButton>
       </Box>
     </Box>
-    <Divider sx={{ mb: 2 }} />
+    <Divider sx={{ mb: 1.5 }} />
   </>
 ));
 
 // Optimized day column with better memoization
 const DayColumn = React.memo(({ ymd, dateObj, cards, onEdit }) => (
   <Box>
-    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+    <Typography variant="caption" fontSize="0.7rem" fontWeight={500} sx={{ mb: 0.5, display: "block" }}>
       {weekdayShort(dateObj)} {dateObj.getMonth() + 1}/{dateObj.getDate()}
     </Typography>
     <Droppable droppableId={ymd}>
@@ -172,9 +172,9 @@ const DayColumn = React.memo(({ ymd, dateObj, cards, onEdit }) => (
           ref={provided.innerRef}
           {...provided.droppableProps}
           sx={{
-            minHeight: 200,
-            p: 1,
-            borderRadius: 2,
+            minHeight: 150,
+            p: 0.5,
+            borderRadius: 1.5,
             bgcolor: snapshot.isDraggingOver ? "action.hover" : "background.default",
             transition: "background-color 120ms ease-in-out"
           }}
@@ -199,51 +199,70 @@ const DayColumn = React.memo(({ ymd, dateObj, cards, onEdit }) => (
 );
 
 // Extracted plan card component for better performance
-const PlanCard = React.memo(({ plan, index, onEdit }) => (
-  <Draggable draggableId={String(plan.id)} index={index}>
-    {(provided, snapshot) => (
-      <Card
-        ref={provided.innerRef}
-        {...provided.draggableProps}
-        {...provided.dragHandleProps}
-        variant="outlined"
-        sx={{
-          mb: 1.25,
-          boxShadow: snapshot.isDragging ? 4 : 0,
-          borderRadius: 2,
-          cursor: "grab",
-          transition: "box-shadow 120ms ease-in-out",
-          "&:active": { cursor: "grabbing" }
-        }}
-        onClick={() => onEdit(plan)}
-      >
-        <CardContent sx={{ p: 1.25 }}>
-          <Stack spacing={0.5}>
-            <Typography variant="subtitle2" noWrap>
-              {plan._card.blockName}
-              {plan._card.grower && ` — ${plan._card.grower}`}
-            </Typography>
-            
-            <Stack direction="row" spacing={1} alignItems="center">
-              {plan._card.commodityName && (
-                <Chip size="small" label={plan._card.commodityName} />
+const PlanCard = React.memo(({ plan, index, onEdit }) => {
+  const commodityColor = getCommodityColor(plan._card.commodityName);
+  
+  return (
+    <Draggable draggableId={String(plan.id)} index={index}>
+      {(provided, snapshot) => (
+        <Card
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          variant="outlined"
+          sx={{
+            mb: 0.75,
+            boxShadow: snapshot.isDragging ? 4 : 0,
+            borderRadius: 1.5,
+            cursor: "grab",
+            transition: "box-shadow 120ms ease-in-out",
+            "&:active": { cursor: "grabbing" }
+          }}
+          onClick={() => onEdit(plan)}
+        >
+          <CardContent sx={{ p: 0.75, "&:last-child": { pb: 0.75 } }}>
+            <Stack spacing={0.25}>
+              <Typography variant="body2" fontSize="0.75rem" fontWeight={500} noWrap>
+                {plan._card.blockName}
+              </Typography>
+              
+              <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
+                {plan._card.commodityName && (
+                  <Chip 
+                    size="small" 
+                    label={plan._card.commodityName}
+                    sx={{
+                      height: 18,
+                      fontSize: "0.65rem",
+                      backgroundColor: commodityColor,
+                      color: getContrastColor(commodityColor),
+                      "& .MuiChip-label": { px: 0.5 }
+                    }}
+                  />
+                )}
+                <Typography variant="caption" fontSize="0.65rem" color="text.secondary" noWrap>
+                  {formatBinInfo(plan.planned_bins, plan.bins)}
+                </Typography>
+              </Stack>
+              
+              {plan._card.contractorName && (
+                <Typography variant="caption" fontSize="0.65rem" color="text.secondary" noWrap>
+                  {plan._card.contractorName}
+                </Typography>
               )}
-              <Typography variant="caption" color="text.secondary">
-                {formatBinInfo(plan.planned_bins, plan.bins)}
-              </Typography>
+              
+              {plan._card.grower && (
+                <Typography variant="caption" fontSize="0.6rem" color="text.disabled" noWrap>
+                  {plan._card.grower}
+                </Typography>
+              )}
             </Stack>
-            
-            {plan._card.contractorName && (
-              <Typography variant="caption" color="text.secondary">
-                {plan._card.contractorName}
-              </Typography>
-            )}
-          </Stack>
-        </CardContent>
-      </Card>
-    )}
-  </Draggable>
-));
+          </CardContent>
+        </Card>
+      )}
+    </Draggable>
+  );
+});
 
 /* ---------- Helper Functions ---------- */
 
@@ -374,4 +393,35 @@ function weekdayShort(date) {
 function formatRangeLabel(start, end) {
   const format = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
   return `${format(start)} – ${format(end)}`;
+}
+
+// Color generation for commodities
+function getCommodityColor(commodityName) {
+  if (!commodityName) return "#e0e0e0";
+  
+  const colors = [
+    "#ffb3ba", "#ffdfba", "#ffffba", "#baffc9", "#bae1ff",
+    "#c9c9ff", "#ffc9ff", "#ffb3d1", "#d1ffb3", "#b3d1ff",
+    "#ffd1b3", "#d1b3ff", "#b3ffd1", "#ffb3c9", "#c9b3ff",
+    "#b3c9ff", "#ffc9b3", "#c9ffb3", "#b3ffff", "#ffb3b3"
+  ];
+  
+  let hash = 0;
+  for (let i = 0; i < commodityName.length; i++) {
+    hash = commodityName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function getContrastColor(hexColor) {
+  // Convert hex to RGB
+  const r = parseInt(hexColor.slice(1, 3), 16);
+  const g = parseInt(hexColor.slice(3, 5), 16);
+  const b = parseInt(hexColor.slice(5, 7), 16);
+  
+  // Calculate luminance
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  return luminance > 0.7 ? "#333333" : "#ffffff";
 }

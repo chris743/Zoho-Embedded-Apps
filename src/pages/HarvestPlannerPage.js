@@ -97,8 +97,8 @@ const filtered = rows.filter(r => {
 }).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
 return (
-    <Container maxWidth={false} sx={{ py: 1 }}>
-        <Box sx = {{pb:1}}>
+    <Container maxWidth={false} sx={{ py: 0.5 }}>
+        <Box sx = {{pb:0.5}}>
             <ToggleButtonGroup
                 value={view}
                 exclusive
@@ -110,7 +110,7 @@ return (
                 </ToggleButtonGroup>
         </Box>
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 1.5 }}>
             <TextField type="date" label="From" InputLabelProps={{ shrink: true }} value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} sx={{ bgcolor: 'white', borderRadius: 1, width: 200 }} />
             <TextField type="date" label="To" InputLabelProps={{ shrink: true }} value={dateTo} onChange={(e) => setDateTo(e.target.value)} sx={{ bgcolor: 'white', borderRadius: 1, width: 200 }} />
             <Box sx={{ flexGrow: 1 }} />
