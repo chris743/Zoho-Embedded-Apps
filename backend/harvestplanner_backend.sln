@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "HarvestPlanner.API", "HarvestPlanner.API", "{68070E02-0710-6BD9-DC4F-85CFFD6D5F6D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "backend.API", "HarvestPlanner.API\backend.API\backend.API.csproj", "{5A5303C4-E469-5F6C-4F3A-47B27404D555}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5A5303C4-E469-5F6C-4F3A-47B27404D555}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A5303C4-E469-5F6C-4F3A-47B27404D555}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A5303C4-E469-5F6C-4F3A-47B27404D555}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A5303C4-E469-5F6C-4F3A-47B27404D555}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5A5303C4-E469-5F6C-4F3A-47B27404D555} = {68070E02-0710-6BD9-DC4F-85CFFD6D5F6D}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {359ECB2D-13E1-4418-BFF8-C164E2499F05}
+	EndGlobalSection
+EndGlobal

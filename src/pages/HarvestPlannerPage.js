@@ -10,7 +10,8 @@ import { BlocksApi } from "../api/blocks";
 import { PoolsApi } from "../api/pools"
 import { ContractorsApi } from "../api/contractors";
 import { CommoditiesApi } from "../api/commodities";
-import { WeeklyPlannerBoard } from "../components/WeeklyPlannerBoard";
+import { WeeklyPlannerBoard } from "../components/WeeklyPlannerComponents/WeeklyPlannerBoard";
+import ViewPlanDialog from "../components/ViewPlanDialog";
 
 
 export default function HarvestPlannerPage() {
@@ -31,7 +32,9 @@ export default function HarvestPlannerPage() {
     const [dateFrom, setDateFrom] = useState(() => new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10));
     const [dateTo, setDateTo] = useState(() => new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10));
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [viewDialogOpen, setViewDialogOpen] = useState(false);
     const [editRow, setEditRow] = useState(null);
+    const [viewRow, setViewRow] = useState(null);
     
     const [blocks, setBlocks] = useState([]);
     const [contractors, setContractors] = useState([]);
@@ -125,6 +128,14 @@ return (
             pools={pools}
             contractors={contractors}
         />
+        <ViewPlanDialog
+            open={viewDialogOpen}
+            plan={viewRow}        
+            onClose={() => setViewDialogOpen(false)}
+            blocks={blocks}
+            contractors={contractors}
+            commodities={commodities}
+        />
         <Snackbar open={!!toast} autoHideDuration={3000} onClose={() => setToast(null)} message={toast || ''} />
         {view === "table" ? (
         <Box sx={{width: '100%', bgcolor: 'white', borderRadius: 2 }}>
@@ -143,6 +154,7 @@ return (
             contractors = {contractors}
             commodities = {commodities}
             onEdit = {(row) => {setEditRow(row); setDialogOpen(true);}}
+            onView={(row) => {setViewRow(row); setViewDialogOpen(true);}}
             svc = {svc}
             weekStart = {weekStart}
             onWeekChange = {setWeekStart}

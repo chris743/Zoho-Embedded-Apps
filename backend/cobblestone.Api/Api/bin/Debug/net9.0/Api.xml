@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Api</name>
+    </assembly>
+    <members>
+        <member name="M:Api.Controllers.BlocksController.Get(System.Threading.CancellationToken)">
+            <summary>
+            Get top 1000 Blocks
+            </summary>
+        </member>
+        <member name="M:Api.Controllers.CommoditiesController.Get(System.Threading.CancellationToken)">
+            <summary>
+            Get top 1000 Blocks
+            </summary>
+        </member>
+        <member name="T:Api.Controllers.HarvestContractorsController">
+            <summary>Manage HarvestContractors.</summary>
+        </member>
+        <member name="T:Api.Controllers.HarvestPlansController">
+            <summary>Manage harvest plans.</summary>
+        </member>
+        <member name="T:Api.Controllers.PoolsController">
+            <summary>Read-only access to Pools.</summary>
+        </member>
+        <member name="T:Api.Controllers.ProductsController">
+            <summary>
+            Manage products.
+            </summary>
+        </member>
+        <member name="M:Api.Controllers.ProductsController.GetAll">
+            <summary>
+            List all products.
+            </summary>
+        </member>
+        <member name="M:Api.Controllers.ProductsController.GetById(System.Int32)">
+            <summary>
+            Get a product by ID.
+            </summary>
+        </member>
+        <member name="M:Api.Controllers.ProductsController.Create(Api.Controllers.ProductCreateDto)">
+            <summary>
+            Create a new product.
+            </summary>
+        </member>
+        <member name="M:Api.Controllers.ProductsController.Update(System.Int32,Api.Controllers.ProductUpdateDto)">
+            <summary>
+            Update an existing product.
+            </summary>
+        </member>
+        <member name="M:Api.Controllers.ProductsController.Delete(System.Int32)">
+            <summary>
+            Delete a product.
+            </summary>
+        </member>
+    </members>
+</doc>
