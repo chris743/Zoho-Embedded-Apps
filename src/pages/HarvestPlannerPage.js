@@ -10,6 +10,7 @@ import { BlocksApi } from "../api/blocks";
 import { PoolsApi } from "../api/pools"
 import { ContractorsApi } from "../api/contractors";
 import { CommoditiesApi } from "../api/commodities";
+import { ScoutReportsApi } from "../api/scoutReports";
 import { WeeklyPlannerBoard } from "../components/WeeklyPlannerComponents/WeeklyPlannerBoard";
 import ViewPlanDialog from "../components/ViewPlanDialog";
 
@@ -24,6 +25,7 @@ export default function HarvestPlannerPage() {
     const poolsSvc = useMemo(() => PoolsApi(api), [api]);
     const contractorSvc = useMemo(() => ContractorsApi(api), [api]);
     const commoditiesSvc = useMemo(() => CommoditiesApi(api), [api]);
+    const scoutReportsSvc = useMemo(() => ScoutReportsApi(api), [api]);
 
 
     const [toast, setToast] = useState(null);
@@ -135,6 +137,7 @@ return (
             blocks={blocks}
             contractors={contractors}
             commodities={commodities}
+            scoutReportsSvc={scoutReportsSvc}
         />
         <Snackbar open={!!toast} autoHideDuration={3000} onClose={() => setToast(null)} message={toast || ''} />
         {view === "table" ? (

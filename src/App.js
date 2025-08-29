@@ -31,7 +31,7 @@ return (
 
 
 <Routes>
-<Route path="/" element={<Home />} />
+<Route path="/" element={<HarvestPlannerPage />} />
 <Route path="/harvestcontractors" element={<HarvestContractorsPage />} />
 <Route path="/harvestplans" element={<HarvestPlannerPage />} />
 
