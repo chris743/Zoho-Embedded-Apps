@@ -12,7 +12,7 @@ import { ContractorsApi } from "../api/contractors";
 import { CommoditiesApi } from "../api/commodities";
 import { ScoutReportsApi } from "../api/scoutReports";
 import { WeeklyPlannerBoard } from "../components/WeeklyPlannerComponents/WeeklyPlannerBoard";
-import ViewPlanDialog from "../components/ViewPlanDialog";
+import ViewPlanDialog from "../components/harvestPlanViewModal/HarvestPlanViewModal";
 
 
 export default function HarvestPlannerPage() {
@@ -135,6 +135,7 @@ return (
             plan={viewRow}        
             onClose={() => setViewDialogOpen(false)}
             blocks={blocks}
+            pools={pools}
             contractors={contractors}
             commodities={commodities}
             scoutReportsSvc={scoutReportsSvc}
