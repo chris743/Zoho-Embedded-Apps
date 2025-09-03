@@ -118,8 +118,17 @@ export function isZohoEmbedded() {
     const urlParams = new URLSearchParams(window.location.search);
     const hasZohoParams = urlParams.has('access_token') || urlParams.has('token') || urlParams.has('zoho');
     
-    // Check if parent window is Zoho
-    const isZohoParent = window.parent && window.parent.location.hostname.includes('zoho');
+    // Check if parent window is Zoho (with error handling for cross-origin)
+    let isZohoParent = false;
+    try {
+        if (window.parent && window.parent.location) {
+            isZohoParent = window.parent.location.hostname.includes('zoho');
+        }
+    } catch (error) {
+        // Cross-origin access blocked - this is expected when embedded
+        // If we can't access parent location, we're likely in an iframe
+        isZohoParent = isInIframe;
+    }
     
     return isInIframe || hasZohoParams || isZohoParent;
 }
@@ -140,25 +149,31 @@ export function useZohoAuth() {
         const initializeAuth = async () => {
             setLoading(true);
             
-            const accessToken = getZohoToken();
-            if (!accessToken) {
-                setLoading(false);
-                return;
-            }
+            try {
+                const accessToken = getZohoToken();
+                if (!accessToken) {
+                    setLoading(false);
+                    return;
+                }
 
-            const isValid = await validateZohoToken(accessToken);
-            if (!isValid) {
+                const isValid = await validateZohoToken(accessToken);
+                if (!isValid) {
+                    clearZohoToken();
+                    setLoading(false);
+                    return;
+                }
+
+                const userInfo = await getZohoUserInfo(accessToken);
+                
+                setToken(accessToken);
+                setIsAuthenticated(true);
+                setUser(userInfo);
+            } catch (error) {
+                console.error('Error during authentication initialization:', error);
                 clearZohoToken();
+            } finally {
                 setLoading(false);
-                return;
             }
-
-            const userInfo = await getZohoUserInfo(accessToken);
-            
-            setToken(accessToken);
-            setIsAuthenticated(true);
-            setUser(userInfo);
-            setLoading(false);
         };
 
         initializeAuth();
