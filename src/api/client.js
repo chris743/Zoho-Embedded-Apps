@@ -20,13 +20,7 @@ export function makeApi(baseURL, jwt) {
             cfg.headers["Authorization"] = `Bearer ${jwt.trim()}`;
         }
         
-        // Add cache-busting for GET requests to ensure fresh data
-        if (cfg.method === 'get') {
-            cfg.params = {
-                ...cfg.params,
-                _cb: Date.now()
-            };
-        }
+
         
         return cfg;
     });
