@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Harvest Planner Monitoring Script
-# Run this to check if your services are running
+# Harvest Planner Frontend Monitoring Script
+# Run this to check if your frontend is running
 
-echo "🔍 Checking Harvest Planner Status..."
-echo "=================================="
+echo "🔍 Checking Harvest Planner Frontend Status..."
+echo "============================================="
 
 # Check if PM2 is running
 if command -v pm2 &> /dev/null; then
@@ -27,13 +27,8 @@ else
     echo "❌ Frontend (port 3000): Not running"
 fi
 
-if netstat -tlnp | grep :5000 > /dev/null; then
-    echo "✅ Backend (port 5000): Running"
-else
-    echo "❌ Backend (port 5000): Not running"
-fi
-
 echo ""
-echo "🔄 To restart services: pm2 restart all"
+echo "🔄 To restart frontend: pm2 restart harvest-planner-frontend-prod"
 echo "📊 To view live logs: pm2 logs"
-echo "⏹️  To stop services: pm2 stop all"
+echo "⏹️  To stop frontend: pm2 stop harvest-planner-frontend-prod"
+echo "🏗️  To rebuild and restart: ./deploy-production.sh"

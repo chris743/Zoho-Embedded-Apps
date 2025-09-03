@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Harvest Planner Production Deployment Script
-# This script builds and deploys the production version
+# Harvest Planner Frontend Production Deployment Script
+# This script builds and deploys the frontend production version
 
-echo "🚀 Starting Harvest Planner Production Deployment..."
-echo "=================================================="
+echo "🚀 Starting Harvest Planner Frontend Production Deployment..."
+echo "============================================================="
 
 # Create logs directory if it doesn't exist
 mkdir -p logs
@@ -31,10 +31,6 @@ fi
 
 echo "✅ Build completed successfully!"
 
-# Start the backend
-echo "🔧 Starting backend..."
-pm2 start ecosystem.config.js --only harvest-planner-backend
-
 # Start the production frontend
 echo "📱 Starting production frontend..."
 pm2 start ecosystem.config.js --only harvest-planner-frontend-prod
@@ -46,13 +42,10 @@ pm2 save
 pm2 startup
 
 echo ""
-echo "✅ Production deployment completed!"
-echo "=================================="
-echo "🌐 Frontend (Production): http://localhost:3001"
-echo "🔧 Backend API: http://localhost:5000"
-echo "📊 Health Check: http://localhost:5000/api/health"
-echo ""
+echo "✅ Frontend production deployment completed!"
+echo "============================================"
+echo "🌐 Frontend (Production): http://localhost:3000"
 echo "📊 Check status with: pm2 status"
 echo "📋 View logs with: pm2 logs"
-echo "🔄 Restart with: pm2 restart all"
-echo "⏹️  Stop with: pm2 stop all"
+echo "🔄 Restart with: pm2 restart harvest-planner-frontend-prod"
+echo "⏹️  Stop with: pm2 stop harvest-planner-frontend-prod"
