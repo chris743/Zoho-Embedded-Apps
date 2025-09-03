@@ -85,11 +85,6 @@ export function WeeklyPlannerBoard({
     try {
       const newDate = new Date(destination.droppableId + "T00:00:00").toISOString();
       await svc.update(draggableId, { date: newDate });
-      
-      // After successful update, refresh the buckets to maintain proper sorting
-      // This ensures the data is in sync with the server and properly sorted
-      const refreshedBuckets = buildBuckets(plans, dayKeys, lookupMaps);
-      setBuckets(refreshedBuckets);
     } catch (err) {
       console.error("Move failed:", err);
       // Revert on error
