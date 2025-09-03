@@ -6,11 +6,12 @@ export const PlanTitle = memo(({ blockName, grower, blockID }) => (
       variant="subtitle1" 
       sx={{ 
         fontWeight: 600,
+        fontSize: '0.8rem',
         color: 'grey.900',
-        lineHeight: 1.2,
-        mb: grower ? 0.5 : 0
+        lineHeight: 1.1,
+        mb: grower ? 0.3 : 0
       }}
-      noWrap
+      
     >
       {blockName}
     </Typography>
@@ -19,7 +20,7 @@ export const PlanTitle = memo(({ blockName, grower, blockID }) => (
         variant="body2" 
         sx={{ 
           color: 'grey.600',
-          fontSize: '0.875rem'
+          fontSize: '0.7rem'
         }}
         noWrap
       >

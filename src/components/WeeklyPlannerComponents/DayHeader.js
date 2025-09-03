@@ -8,7 +8,7 @@ export const DayHeader = memo(({ dateObj, isWeekend }) => {
   
   return (
     <Box sx={{ 
-      p: 2,
+      p: 0,
       bgcolor: isToday 
         ? 'primary.50' 
         : isWeekend 
@@ -27,18 +27,7 @@ export const DayHeader = memo(({ dateObj, isWeekend }) => {
           letterSpacing: '0.025em'
         }}
       >
-        {weekdayShort(dateObj).toUpperCase()}
-      </Typography>
-      <Typography 
-        variant="h6" 
-        sx={{ 
-          fontWeight: 700,
-          color: isToday ? 'primary.900' : 'grey.900',
-          textAlign: 'center',
-          fontSize: '1.25rem'
-        }}
-      >
-        {dateObj.getDate()}
+        {weekdayShort(dateObj).toUpperCase()}, {dateObj.getDate()}
       </Typography>
     </Box>
   );

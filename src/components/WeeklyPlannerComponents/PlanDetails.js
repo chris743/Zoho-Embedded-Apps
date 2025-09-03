@@ -1,37 +1,30 @@
 import { memo } from "react";
-import { Stack, Chip, Typography, IconButton } from "@mui/material";
+import { Stack, Chip, Typography } from "@mui/material";
 import { formatBinInfo } from "./utils/dataUtils";
-import AgricultureIcon from '@mui/icons-material/Agriculture';
-import InfoIcon from '@mui/icons-material/Info'
+import { getCommodityColor, getContrastColor } from "../../utils/theme";
 
 export const PlanDetails = memo(({ commodityName, plannedBins, actualBins, estimatedBins }) => (
-  <Stack spacing={1}>
-    {commodityName && (
-      <Chip 
-        size="small" 
+  <Stack spacing={0.8}>
+    {commodityName ? (
+      <Chip
         label={commodityName}
-        icon={<AgricultureIcon />}
+        size="small"
         sx={{
-          height: 28,
-          fontSize: '0.75rem',
+          backgroundColor: getCommodityColor(commodityName),
+          color: getContrastColor(getCommodityColor(commodityName)),
           fontWeight: 500,
-          bgcolor: 'success.50',
-          color: 'success.800',
-          border: '1px solid',
-          borderColor: 'success.200',
-          '& .MuiChip-icon': {
-            fontSize: 16,
-            color: 'success.600'
-          }
+          fontSize: '0.7rem',
+          height: 22,
+          width: 'fit-content'
         }}
       />
-    )}
+    ) : null}
     {(plannedBins != null || actualBins != null) && (
       <Typography 
         variant="caption" 
         sx={{ 
           color: 'grey.600',
-          fontSize: '0.75rem',
+          fontSize: '0.7rem',
           fontWeight: 500
         }}
       >

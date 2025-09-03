@@ -50,7 +50,6 @@ export function ScoutSizeChart({ scoutReports, loading }) {
           }
         }
         
-        console.log(`Parsing size${i}:`, { rawValue: valueStr, extractedLabel: sizeLabel });
         
         if (numericValue > 0) {
           sizes.push({

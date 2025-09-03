@@ -1,6 +1,7 @@
 import {
     toYMD,
 } from './dateUtils';
+import { getCommodityIdxFromBlockOrPlan, buildCommodityMap } from "../../utils/commodities";
 
 export function createBlockMap(blocks) {
     const map = new Map();
@@ -26,21 +27,7 @@ export function createContractorMap(contractors) {
 }
 
 export function createCommodityMap(commodities) {
-    const map = new Map();
-    for (const commodity of commodities || []) {
-        const src = (commodity.source_database ?? commodity.SOURCE_DATABASE ?? "")
-            .toString().toLowerCase();
-        if (src && src !== "cobblestone") continue;
-
-        const idx = commodity.CMTYIDX ?? commodity.cmtyidx ?? commodity.id ?? commodity.code;
-        const name = commodity.DESCR ?? commodity.descr ?? commodity.name ??
-            commodity.NAME ?? String(idx ?? "");
-
-        if (idx != null) {
-            map.set(String(idx), String(name));
-        }
-    }
-    return map;
+    return buildCommodityMap(commodities, true);
 }
 
 export function enrichPlan(plan, { blocks, contractors, commodities }) {
@@ -51,7 +38,7 @@ export function enrichPlan(plan, { blocks, contractors, commodities }) {
     const estimatedBins = block.estimatedbins;
     const growerName = block.growerName;
     const contractor = contractors.get(plan.contractor_id ?? -1);
-    const commodityIdx = block?.CMTYIDX ?? block?.cmtyidx ?? block?.VARIETYIDX ?? null;
+    const commodityIdx = getCommodityIdxFromBlockOrPlan(block, plan);
     const commodityName = commodityIdx != null ?
         (commodities.get(String(commodityIdx)) ?? "") : "";
 
@@ -65,7 +52,9 @@ export function enrichPlan(plan, { blocks, contractors, commodities }) {
             growerName: growerName,
             grower: block?.GrowerName ?? block?.growerName ?? "",
             commodityName,
+            commodityIdx,
             contractorName: contractor?.name ?? contractor?.NAME ?? "",
+            block: block, // Include full block object for additional data access
         }
     };
 }
@@ -86,14 +75,30 @@ export function buildBuckets(plans, dayKeys, lookupMaps) {
         }
     }
 
-    // Sort each day's plans
+    // Sort each day's plans by commodity first, then by planned bins
     for (const key of dayKeys) {
-        buckets[key].sort((a, b) =>
-            (a._card.blockName || "").localeCompare(b._card.blockName || "")
-        );
+        buckets[key] = sortPlansByCommodityAndBins(buckets[key]);
     }
 
     return buckets;
+}
+
+export function sortPlansByCommodityAndBins(plans) {
+    return plans.sort((a, b) => {
+        // First sort by commodity name
+        const commodityA = a._card.commodityName || "";
+        const commodityB = b._card.commodityName || "";
+        const commodityCompare = commodityA.localeCompare(commodityB);
+        
+        if (commodityCompare !== 0) {
+            return commodityCompare;
+        }
+        
+        // If commodities are the same, sort by planned bins (descending - higher bins first)
+        const binsA = a.planned_bins || 0;
+        const binsB = b.planned_bins || 0;
+        return binsB - binsA;
+    });
 }
 
 export function formatBinInfo(planned, actual, estimatedBins) {

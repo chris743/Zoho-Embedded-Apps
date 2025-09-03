@@ -16,7 +16,7 @@ export const PlanCard = memo(({ plan, index, onEdit, onView }) => {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           sx={{
-            mb: 1.5,
+            mb: 1.2,
             borderRadius: 2,
             cursor: "grab",
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -40,7 +40,7 @@ export const PlanCard = memo(({ plan, index, onEdit, onView }) => {
             }
           }}
         >
-          <CardContent sx={{ p: 2 }}>
+          <CardContent sx={{ p: 1.5 }}>
             <PlanCardContent plan={plan} editClick={handleClick} viewClick={handleViewClick} />
           </CardContent>
         </Card>

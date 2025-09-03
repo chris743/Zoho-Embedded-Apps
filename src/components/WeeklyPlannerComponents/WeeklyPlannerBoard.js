@@ -1,6 +1,6 @@
-import { startOfWeek, sevenDays, toYMD, addDays } from "./utils/dateUtils";
+import { startOfWeek, sevenDays, toYMD } from "./utils/dateUtils";
 import { createBlockMap, createContractorMap, createCommodityMap, buildBuckets } from "./utils/dataUtils";
-import { WeekHeader } from "./WeekHeader";
+
 import { WeekGrid } from "./WeekGrid";
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
@@ -46,11 +46,7 @@ export function WeeklyPlannerBoard({
     onView?.(plan);
   }, [onView]);
 
-  const handleWeekChange = useMemo(() => ({
-    prev: () => onWeekChange?.(addDays(start, -7)),
-    next: () => onWeekChange?.(addDays(start, 7)),
-    today: () => onWeekChange?.(startOfWeek(new Date()))
-  }), [onWeekChange, start]);
+
 
   const handleDragEnd = useCallback(async ({ source, destination, draggableId }) => {
     if (!destination || 
@@ -89,6 +85,11 @@ export function WeeklyPlannerBoard({
     try {
       const newDate = new Date(destination.droppableId + "T00:00:00").toISOString();
       await svc.update(draggableId, { date: newDate });
+      
+      // After successful update, refresh the buckets to maintain proper sorting
+      // This ensures the data is in sync with the server and properly sorted
+      const refreshedBuckets = buildBuckets(plans, dayKeys, lookupMaps);
+      setBuckets(refreshedBuckets);
     } catch (err) {
       console.error("Move failed:", err);
       // Revert on error
@@ -105,12 +106,9 @@ export function WeeklyPlannerBoard({
       maxWidth: '100%',
       bgcolor: 'grey.50',
       minHeight: '100vh',
-      p: 3
+      p: 0
     }}>
-      <WeekHeader 
-        days={days} 
-        onWeekChange={handleWeekChange}
-      />
+
       <WeekGrid 
         days={days}
         buckets={buckets}

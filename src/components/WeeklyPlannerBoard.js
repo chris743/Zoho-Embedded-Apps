@@ -1,11 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
-  Box, Paper, Typography, IconButton, Chip, Card, CardContent, Stack, Divider
+  Box, Paper, Typography, Chip, Card, CardContent, Stack
 } from "@mui/material";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import TodayIcon from "@mui/icons-material/Today";
+import { getCommodityColor, getContrastColor } from "../utils/theme";
 
 export function WeeklyPlannerBoard({
   plans = [],
@@ -44,11 +42,7 @@ export function WeeklyPlannerBoard({
     onEdit?.(plan);
   }, [onEdit]);
 
-  const handleWeekChange = useMemo(() => ({
-    prev: () => onWeekChange?.(addDays(start, -7)),
-    next: () => onWeekChange?.(addDays(start, 7)),
-    today: () => onWeekChange?.(startOfWeek(new Date()))
-  }), [onWeekChange, start]);
+
 
   // Optimized drag handler with minimal state updates
   const onDragEnd = useCallback(async ({ source, destination, draggableId }) => {
@@ -100,17 +94,17 @@ export function WeeklyPlannerBoard({
   }, [plans, dayKeys, lookupMaps, svc]);
 
   return (
-    <Paper sx={{ p: 1.5 }}>
-      <WeekHeader 
-        days={days} 
-        onWeekChange={handleWeekChange}
-      />
-      
+    <Paper elevation={0} sx={{ 
+      p: 2.5, 
+      bgcolor: 'background.paper',
+      border: '1px solid #E8EBF0',
+      borderRadius: 2 
+    }}>
       <DragDropContext onDragEnd={onDragEnd}>
         <Box sx={{ 
           display: "grid", 
           gridTemplateColumns: "repeat(7, 1fr)", 
-          gap: 1, 
+          gap: 1.5, 
           alignItems: "flex-start" 
         }}>
           {days.map((day) => {
@@ -132,53 +126,50 @@ export function WeeklyPlannerBoard({
   );
 }
 
-// Extracted header component for better separation of concerns
-const WeekHeader = React.memo(({ days, onWeekChange }) => (
-  <>
-    <Box sx={{ 
-      display: "flex", 
-      alignItems: "center", 
-      justifyContent: "space-between", 
-      mb: 0.5 
-    }}>
-      <Typography variant="subtitle1" fontSize="1rem">
-        Week of {formatRangeLabel(days[0], days[6])}
-      </Typography>
-      <Box>
-        <IconButton size="small" onClick={onWeekChange.prev} aria-label="Previous week">
-          <ChevronLeftIcon />
-        </IconButton>
-        <IconButton size="small" onClick={onWeekChange.today} aria-label="Current week">
-          <TodayIcon />
-        </IconButton>
-        <IconButton size="small" onClick={onWeekChange.next} aria-label="Next week">
-          <ChevronRightIcon />
-        </IconButton>
-      </Box>
-    </Box>
-    <Divider sx={{ mb: 1.5 }} />
-  </>
-));
+
 
 // Optimized day column with better memoization
-const DayColumn = React.memo(({ ymd, dateObj, cards, onEdit }) => (
-  <Box>
-    <Typography variant="caption" fontSize="0.7rem" fontWeight={500} sx={{ mb: 0.5, display: "block" }}>
-      {weekdayShort(dateObj)} {dateObj.getMonth() + 1}/{dateObj.getDate()}
-    </Typography>
-    <Droppable droppableId={ymd}>
-      {(provided, snapshot) => (
-        <Box
-          ref={provided.innerRef}
-          {...provided.droppableProps}
-          sx={{
-            minHeight: 150,
-            p: 0.5,
-            borderRadius: 1.5,
-            bgcolor: snapshot.isDraggingOver ? "action.hover" : "background.default",
-            transition: "background-color 120ms ease-in-out"
-          }}
-        >
+const DayColumn = React.memo(({ ymd, dateObj, cards, onEdit }) => {
+  const isToday = new Date().toDateString() === dateObj.toDateString();
+  
+  return (
+    <Box>
+      <Box sx={{ 
+        p: 1, 
+        mb: 1, 
+        borderRadius: 1.5,
+        bgcolor: isToday ? 'primary.main' : 'background.surface',
+        color: isToday ? 'white' : 'text.primary',
+        textAlign: 'center',
+        border: '1px solid #E8EBF0'
+      }}>
+        <Typography variant="caption" fontSize="0.75rem" fontWeight={600}>
+          {weekdayShort(dateObj)}
+        </Typography>
+        <Typography variant="body2" fontSize="0.9rem" fontWeight={500}>
+          {dateObj.getDate()}
+        </Typography>
+      </Box>
+      
+      <Droppable droppableId={ymd}>
+        {(provided, snapshot) => (
+          <Box
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            sx={{
+              minHeight: 160,
+              p: 0.75,
+              borderRadius: 2,
+              border: '2px dashed #E0E4E7',
+              bgcolor: snapshot.isDraggingOver 
+                ? 'rgba(66, 133, 244, 0.08)' 
+                : 'transparent',
+              borderColor: snapshot.isDraggingOver 
+                ? 'primary.main' 
+                : '#E0E4E7',
+              transition: "all 120ms ease-in-out"
+            }}
+          >
           {cards.map((plan, index) => (
             <PlanCard
               key={plan.id}
@@ -209,20 +200,34 @@ const PlanCard = React.memo(({ plan, index, onEdit }) => {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          variant="outlined"
+          elevation={0}
           sx={{
             mb: 0.75,
-            boxShadow: snapshot.isDragging ? 4 : 0,
-            borderRadius: 1.5,
+            border: '1px solid #E8EBF0',
+            borderRadius: 2,
             cursor: "grab",
-            transition: "box-shadow 120ms ease-in-out",
+            transition: "all 120ms ease-in-out",
+            transform: snapshot.isDragging ? 'rotate(2deg)' : 'none',
+            boxShadow: snapshot.isDragging 
+              ? '0px 8px 24px rgba(0,0,0,0.15)' 
+              : '0px 1px 3px rgba(0,0,0,0.08)',
+            "&:hover": {
+              boxShadow: '0px 4px 12px rgba(0,0,0,0.1)',
+              borderColor: '#C4C9CF',
+            },
             "&:active": { cursor: "grabbing" }
           }}
           onClick={() => onEdit(plan)}
         >
-          <CardContent sx={{ p: 0.75, "&:last-child": { pb: 0.75 } }}>
-            <Stack spacing={0.25}>
-              <Typography variant="body2" fontSize="0.75rem" fontWeight={500} noWrap>
+          <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
+            <Stack spacing={0.5}>
+              <Typography 
+                variant="body2" 
+                fontSize="0.8rem" 
+                fontWeight={600} 
+                color="text.primary"
+                noWrap
+              >
                 {plan._card.blockName}
               </Typography>
               
@@ -232,28 +237,30 @@ const PlanCard = React.memo(({ plan, index, onEdit }) => {
                     size="small" 
                     label={plan._card.commodityName}
                     sx={{
-                      height: 18,
-                      fontSize: "0.65rem",
+                      height: 20,
+                      fontSize: "0.7rem",
+                      fontWeight: 500,
                       backgroundColor: commodityColor,
                       color: getContrastColor(commodityColor),
-                      "& .MuiChip-label": { px: 0.5 }
+                      border: `1px solid ${commodityColor}`,
+                      "& .MuiChip-label": { px: 0.75 }
                     }}
                   />
                 )}
-                <Typography variant="caption" fontSize="0.65rem" color="text.secondary" noWrap>
+                <Typography variant="caption" fontSize="0.7rem" color="text.secondary" noWrap>
                   {formatBinInfo(plan.planned_bins, plan.bins)}
                 </Typography>
               </Stack>
               
               {plan._card.contractorName && (
-                <Typography variant="caption" fontSize="0.65rem" color="text.secondary" noWrap>
-                  {plan._card.contractorName}
+                <Typography variant="caption" fontSize="0.7rem" color="text.secondary" noWrap>
+                  👤 {plan._card.contractorName}
                 </Typography>
               )}
               
               {plan._card.grower && (
-                <Typography variant="caption" fontSize="0.6rem" color="text.disabled" noWrap>
-                  {plan._card.grower}
+                <Typography variant="caption" fontSize="0.65rem" color="text.disabled" noWrap>
+                  🏪 {plan._card.grower}
                 </Typography>
               )}
             </Stack>
@@ -395,33 +402,3 @@ function formatRangeLabel(start, end) {
   return `${format(start)} – ${format(end)}`;
 }
 
-// Color generation for commodities
-function getCommodityColor(commodityName) {
-  if (!commodityName) return "#e0e0e0";
-  
-  const colors = [
-    "#ffb3ba", "#ffdfba", "#ffffba", "#baffc9", "#bae1ff",
-    "#c9c9ff", "#ffc9ff", "#ffb3d1", "#d1ffb3", "#b3d1ff",
-    "#ffd1b3", "#d1b3ff", "#b3ffd1", "#ffb3c9", "#c9b3ff",
-    "#b3c9ff", "#ffc9b3", "#c9ffb3", "#b3ffff", "#ffb3b3"
-  ];
-  
-  let hash = 0;
-  for (let i = 0; i < commodityName.length; i++) {
-    hash = commodityName.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  
-  return colors[Math.abs(hash) % colors.length];
-}
-
-function getContrastColor(hexColor) {
-  // Convert hex to RGB
-  const r = parseInt(hexColor.slice(1, 3), 16);
-  const g = parseInt(hexColor.slice(3, 5), 16);
-  const b = parseInt(hexColor.slice(5, 7), 16);
-  
-  // Calculate luminance
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
-  return luminance > 0.7 ? "#333333" : "#ffffff";
-}

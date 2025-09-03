@@ -7,8 +7,9 @@ import { memo } from "react";
 export const PlanCardContent = memo(({ plan, editClick, viewClick }) => {
   const { _card } = plan;
   
+  
   return (
-    <Stack spacing={1.5}>
+    <Stack spacing={1.2}>
       <PlanTitle blockName={_card.blockName} grower={_card.grower} blockID={_card.blockID} />
       <PlanDetails 
         commodityName={_card.commodityName}
@@ -19,7 +20,7 @@ export const PlanCardContent = memo(({ plan, editClick, viewClick }) => {
       {_card.contractorName && (
         <ContractorInfo name={_card.contractorName} />
       )}
-        <Stack direction="row" spacing = '1rem' sx={{justifyContent: "center"}}>
+        <Stack direction="row" spacing = '0.8rem' sx={{justifyContent: "center"}}>
             <Button onClick={editClick} size="small" variant="outlined" color="secondary">Edit</Button>
             <Button onClick={viewClick} size="small" variant="outlined" color="primary">View</Button>
         </Stack>

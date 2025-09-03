@@ -6,8 +6,8 @@ export const ContractorInfo = memo(({ name }) => (
   <Box sx={{ 
     display: 'flex', 
     alignItems: 'center', 
-    gap: 0.5,
-    pt: 0.5,
+    gap: 0.4,
+    pt: 0.3,
     borderTop: '1px solid',
     borderColor: 'grey.100'
   }}>
@@ -16,7 +16,7 @@ export const ContractorInfo = memo(({ name }) => (
       variant="caption" 
       sx={{ 
         color: 'grey.600',
-        fontSize: '0.75rem',
+        fontSize: '0.7rem',
         fontWeight: 500
       }}
     >
