@@ -129,18 +129,32 @@ export async function getZohoUserInfo(accessToken) {
  * @returns {string|null} - The access token or null
  */
 export function getZohoToken() {
+    console.log('🔍 getZohoToken called');
+    console.log('🔍 Current URL:', window.location.href);
+    
     // First, try to get token from URL parameters (for embedded apps)
     const urlParams = new URLSearchParams(window.location.search);
+    console.log('🔍 URL params:', Object.fromEntries(urlParams.entries()));
+    
     const urlToken = urlParams.get('access_token') || urlParams.get('token');
+    console.log('🔍 URL token found:', urlToken ? 'Yes' : 'No', urlToken ? `(${urlToken.substring(0, 20)}...)` : '');
     
     if (urlToken) {
         // Store in localStorage for future use
         localStorage.setItem('zoho_access_token', urlToken);
+        console.log('🔍 Token stored in localStorage');
         return urlToken;
     }
     
     // Try to get from localStorage
-    return localStorage.getItem('zoho_access_token');
+    const storedToken = localStorage.getItem('zoho_access_token');
+    console.log('🔍 Stored token found:', storedToken ? 'Yes' : 'No', storedToken ? `(${storedToken.substring(0, 20)}...)` : '');
+    
+    // TEMPORARY: For testing, you can manually set a token in localStorage
+    // Uncomment the line below and replace with a real Zoho token for testing
+    // localStorage.setItem('zoho_access_token', 'YOUR_ZOHO_TOKEN_HERE');
+    
+    return storedToken;
 }
 
 /**
@@ -165,24 +179,30 @@ export function clearZohoToken() {
 export function isZohoEmbedded() {
     // Check if we're in an iframe (common for embedded apps)
     const isInIframe = window.self !== window.top;
+    console.log('🔍 isZohoEmbedded - isInIframe:', isInIframe);
     
     // Check for Zoho-specific URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const hasZohoParams = urlParams.has('access_token') || urlParams.has('token') || urlParams.has('zoho');
+    console.log('🔍 isZohoEmbedded - hasZohoParams:', hasZohoParams);
     
     // Check if parent window is Zoho (with error handling for cross-origin)
     let isZohoParent = false;
     try {
         if (window.parent && window.parent.location) {
             isZohoParent = window.parent.location.hostname.includes('zoho');
+            console.log('🔍 isZohoEmbedded - isZohoParent:', isZohoParent);
         }
     } catch (error) {
         // Cross-origin access blocked - this is expected when embedded
         // If we can't access parent location, we're likely in an iframe
         isZohoParent = isInIframe;
+        console.log('🔍 isZohoEmbedded - cross-origin error, using isInIframe:', isZohoParent);
     }
     
-    return isInIframe || hasZohoParams || isZohoParent;
+    const result = isInIframe || hasZohoParams || isZohoParent;
+    console.log('🔍 isZohoEmbedded - final result:', result);
+    return result;
 }
 
 
@@ -202,26 +222,37 @@ export function useZohoAuth() {
             setLoading(true);
             
             try {
+                console.log('🔍 Starting Zoho authentication...');
                 const accessToken = getZohoToken();
+                console.log('🔍 Token found:', accessToken ? 'Yes' : 'No', accessToken ? `(${accessToken.substring(0, 20)}...)` : '');
+                
                 if (!accessToken) {
+                    console.log('❌ No access token found');
                     setLoading(false);
                     return;
                 }
 
+                console.log('🔍 Validating token...');
                 const isValid = await validateZohoToken(accessToken);
+                console.log('🔍 Token validation result:', isValid);
+                
                 if (!isValid) {
+                    console.log('❌ Token validation failed');
                     clearZohoToken();
                     setLoading(false);
                     return;
                 }
 
+                console.log('🔍 Getting user info...');
                 const userInfo = await getZohoUserInfo(accessToken);
+                console.log('🔍 User info:', userInfo);
                 
                 setToken(accessToken);
                 setIsAuthenticated(true);
                 setUser(userInfo);
+                console.log('✅ Authentication successful');
             } catch (error) {
-                console.error('Error during authentication initialization:', error);
+                console.error('❌ Error during authentication initialization:', error);
                 clearZohoToken();
             } finally {
                 setLoading(false);
