@@ -31,6 +31,9 @@ export function WeeklyPlannerBoard({
   const [buckets, setBuckets] = useState(() => ({}));
   const bucketsRef = useRef(buckets);
   bucketsRef.current = buckets;
+  
+  // Loading state for drag operations
+  const [isDragging, setIsDragging] = useState(false);
 
   // Build buckets when week or plans change
   useEffect(() => {
@@ -55,31 +58,8 @@ export function WeeklyPlannerBoard({
     const srcKey = source.droppableId;
     const dstKey = destination.droppableId;
     
-    // Optimistic update with minimal object creation
-    setBuckets(prev => {
-      const srcCards = prev[srcKey] || [];
-      const movedCard = srcCards[source.index];
-      if (!movedCard) return prev;
-
-      const newBuckets = { ...prev };
-      
-      // Update source array
-      newBuckets[srcKey] = srcCards.filter((_, i) => i !== source.index);
-      
-      // Update destination array
-      const dstCards = srcKey === dstKey ? newBuckets[srcKey] : [...(prev[dstKey] || [])];
-      const updatedCard = {
-        ...movedCard,
-        date: new Date(dstKey + "T00:00:00").toISOString()
-      };
-      
-      dstCards.splice(destination.index, 0, updatedCard);
-      newBuckets[dstKey] = dstCards;
-
-      return newBuckets;
-    });
-
-    // Persist to server with error handling
+    // Persist to server first, then refresh data
+    setIsDragging(true);
     try {
       const newDate = new Date(destination.droppableId + "T00:00:00").toISOString();
       console.log("🔄 Dragging plan:", {
@@ -91,6 +71,9 @@ export function WeeklyPlannerBoard({
       
       await svc.update(draggableId, { date: newDate });
       console.log("✅ Plan moved successfully");
+      
+      // Small delay to ensure server has processed the change
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Refresh the parent component's data to ensure consistency
       if (onReload) {
@@ -105,12 +88,10 @@ export function WeeklyPlannerBoard({
         error: err?.response?.data || err?.message
       });
       
-      // Revert on error by rebuilding from plans
-      const revertedBuckets = buildBuckets(plans, dayKeys, lookupMaps);
-      setBuckets(revertedBuckets);
-      
       const errorMsg = err?.response?.data?.title || err?.message || "Failed to move plan";
       alert(errorMsg);
+    } finally {
+      setIsDragging(false);
     }
   }, [plans, dayKeys, lookupMaps, svc, onReload]);
 
@@ -119,8 +100,28 @@ export function WeeklyPlannerBoard({
       p: 2.5, 
       bgcolor: 'background.paper',
       border: '1px solid #E8EBF0',
-      borderRadius: 2 
+      borderRadius: 2,
+      position: 'relative'
     }}>
+      {isDragging && (
+        <Box sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          bgcolor: 'rgba(255, 255, 255, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          borderRadius: 2
+        }}>
+          <Typography variant="body2" color="primary" sx={{ fontWeight: 500 }}>
+            Saving changes...
+          </Typography>
+        </Box>
+      )}
       <DragDropContext onDragEnd={onDragEnd}>
         <Box sx={{ 
           display: "grid", 
