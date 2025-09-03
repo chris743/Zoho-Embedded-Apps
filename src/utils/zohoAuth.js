@@ -209,7 +209,7 @@ export async function getZohoToken() {
         // TEMPORARY: Bypass authentication for testing in Zoho context
         // Remove this in production!
         console.log('🔍 TEMPORARY: Bypassing authentication for testing');
-        const bypassToken = '1000.test_token_bypass_for_development_only';
+        const bypassToken = '1000.NIW37ET37NPNRIIH3DOKBNK5POPCEB';
         localStorage.setItem('zoho_access_token', bypassToken);
         return bypassToken;
     }
