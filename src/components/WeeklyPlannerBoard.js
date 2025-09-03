@@ -32,13 +32,18 @@ export function WeeklyPlannerBoard({
   const bucketsRef = useRef(buckets);
   bucketsRef.current = buckets;
   
+  // Track if we have pending drag operations to avoid rebuilding buckets
+  const [hasPendingDrag, setHasPendingDrag] = useState(false);
+  
 
 
-  // Build buckets when week or plans change
+  // Build buckets when week or plans change (but not during drag operations)
   useEffect(() => {
-    const newBuckets = buildBuckets(plans, dayKeys, lookupMaps);
-    setBuckets(newBuckets);
-  }, [plans, dayKeys, lookupMaps]);
+    if (!hasPendingDrag) {
+      const newBuckets = buildBuckets(plans, dayKeys, lookupMaps);
+      setBuckets(newBuckets);
+    }
+  }, [plans, dayKeys, lookupMaps, hasPendingDrag]);
 
   // Memoized callbacks to prevent unnecessary re-renders
   const handleEdit = useCallback((plan) => {
@@ -56,6 +61,9 @@ export function WeeklyPlannerBoard({
 
     const srcKey = source.droppableId;
     const dstKey = destination.droppableId;
+    
+    // Set pending drag flag to prevent bucket rebuilding
+    setHasPendingDrag(true);
     
     // Optimistic update - immediate UI feedback
     setBuckets(prev => {
@@ -86,20 +94,19 @@ export function WeeklyPlannerBoard({
       const newDate = new Date(destination.droppableId + "T00:00:00").toISOString();
       await svc.update(draggableId, { date: newDate });
       
-      // Only refresh if there's a mismatch (server data differs from optimistic update)
-      if (onReload) {
-        await onReload();
-      }
+      // Clear pending drag flag after successful update
+      setHasPendingDrag(false);
     } catch (err) {
       console.error("❌ Move failed:", err);
       // Revert on error by rebuilding from plans
       const revertedBuckets = buildBuckets(plans, dayKeys, lookupMaps);
       setBuckets(revertedBuckets);
+      setHasPendingDrag(false);
       
       const errorMsg = err?.response?.data?.title || err?.message || "Failed to move plan";
       alert(errorMsg);
     }
-  }, [plans, dayKeys, lookupMaps, svc, onReload]);
+  }, [plans, dayKeys, lookupMaps, svc]);
 
   return (
     <Paper elevation={0} sx={{ 
