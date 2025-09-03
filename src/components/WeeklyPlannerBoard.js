@@ -14,6 +14,7 @@ export function WeeklyPlannerBoard({
   svc,
   weekStart,
   onWeekChange,
+  onReload,
 }) {
   const start = useMemo(() => startOfWeek(weekStart || new Date()), [weekStart]);
   const days = useMemo(() => sevenDays(start), [start]);
@@ -81,9 +82,29 @@ export function WeeklyPlannerBoard({
     // Persist to server with error handling
     try {
       const newDate = new Date(destination.droppableId + "T00:00:00").toISOString();
+      console.log("🔄 Dragging plan:", {
+        draggableId,
+        newDate,
+        source: source.droppableId,
+        destination: destination.droppableId
+      });
+      
       await svc.update(draggableId, { date: newDate });
+      console.log("✅ Plan moved successfully");
+      
+      // Refresh the parent component's data to ensure consistency
+      if (onReload) {
+        console.log("🔄 Refreshing parent data...");
+        await onReload();
+      }
     } catch (err) {
-      console.error("Move failed:", err);
+      console.error("❌ Move failed:", err);
+      console.error("Error details:", {
+        draggableId,
+        newDate: new Date(destination.droppableId + "T00:00:00").toISOString(),
+        error: err?.response?.data || err?.message
+      });
+      
       // Revert on error by rebuilding from plans
       const revertedBuckets = buildBuckets(plans, dayKeys, lookupMaps);
       setBuckets(revertedBuckets);
@@ -91,7 +112,7 @@ export function WeeklyPlannerBoard({
       const errorMsg = err?.response?.data?.title || err?.message || "Failed to move plan";
       alert(errorMsg);
     }
-  }, [plans, dayKeys, lookupMaps, svc]);
+  }, [plans, dayKeys, lookupMaps, svc, onReload]);
 
   return (
     <Paper elevation={0} sx={{ 
