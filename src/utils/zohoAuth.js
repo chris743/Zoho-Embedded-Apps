@@ -5,255 +5,79 @@ import { useState, useEffect } from 'react';
  * Just validates Zoho tokens for access control - no CRM integration
  */
 
-// Zoho OAuth endpoint for token validation
-const ZOHO_OAUTH_BASE = 'https://accounts.zoho.com/oauth/v2';
+
 
 /**
- * Validates a Zoho access token
- * @param {string} accessToken - The Zoho access token
- * @returns {Promise<boolean>} - Whether the token is valid
+ * Validates a session key
+ * @param {string} sessionKey - The session key
+ * @returns {Promise<boolean>} - Whether the session key is valid
  */
-export async function validateZohoToken(accessToken) {
-    if (!accessToken) {
+export async function validateZohoToken(sessionKey) {
+    if (!sessionKey) {
         return false;
     }
 
-    // Basic token format validation first
-    if (!accessToken.startsWith('1000.') || accessToken.length < 50) {
-        console.warn('Invalid Zoho token format');
-        return false;
-    }
-
-    try {
-        const response = await fetch(`${ZOHO_OAUTH_BASE}/tokeninfo?access_token=${accessToken}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-            },
-            // Add timeout to prevent hanging
-            signal: AbortSignal.timeout(10000) // 10 second timeout
-        });
-        
-        if (!response.ok) {
-            console.warn('Zoho token validation failed with status:', response.status);
-            return false;
-        }
-        
-        const data = await response.json();
-        
-        if (data.error) {
-            console.warn('Zoho token validation failed:', data.error);
-            return false;
-        }
-        
-        // Check if token is not expired
-        const expiresIn = data.expires_in_sec;
-        if (expiresIn <= 0) {
-            console.warn('Zoho token has expired');
-            return false;
-        }
-        
+    // Define your static session key here
+    const VALID_SESSION_KEY = '951c0464a277176d1ebddc4c067151f9739f3a3deb';
+    
+    // Simple string comparison
+    if (sessionKey === VALID_SESSION_KEY) {
+        console.log('✅ Valid session key provided');
         return true;
-    } catch (error) {
-        if (error.name === 'AbortError') {
-            console.warn('Zoho token validation timed out');
-        } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-            console.warn('Network error validating Zoho token - this may be due to CORS or network issues');
-            // For embedded apps, we'll assume the token is valid if it has the right format
-            // since the token was provided by Zoho CRM itself
-            return true;
-        } else {
-            console.error('Error validating Zoho token:', error);
-        }
-        return false;
     }
+    
+    console.warn('❌ Invalid session key provided');
+    return false;
 }
 
 /**
- * Gets basic user information from token validation
- * @param {string} accessToken - The Zoho access token
+ * Gets basic user information for session key authentication
+ * @param {string} sessionKey - The session key
  * @returns {Promise<Object|null>} - Basic user info or null if failed
  */
-export async function getZohoUserInfo(accessToken) {
-    if (!accessToken) {
+export async function getZohoUserInfo(sessionKey) {
+    if (!sessionKey) {
         return null;
     }
 
-    try {
-        const response = await fetch(`${ZOHO_OAUTH_BASE}/tokeninfo?access_token=${accessToken}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-            },
-            signal: AbortSignal.timeout(10000) // 10 second timeout
-        });
-        
-        if (!response.ok) {
-            console.warn('Failed to get Zoho user info with status:', response.status);
-            return null;
-        }
-        
-        const data = await response.json();
-        
-        if (data.error) {
-            console.warn('Failed to get Zoho user info:', data.error);
-            return null;
-        }
-        
-        // Return basic info from token validation
-        return {
-            email: data.email || 'Unknown User',
-            full_name: data.email || 'Zoho User',
-            user_id: data.user_id || 'unknown'
-        };
-    } catch (error) {
-        if (error.name === 'AbortError') {
-            console.warn('Zoho user info request timed out');
-        } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-            console.warn('Network error getting Zoho user info - using fallback');
-            // Return fallback user info for embedded apps
-            return {
-                email: 'Zoho User',
-                full_name: 'Zoho User',
-                user_id: 'embedded_user'
-            };
-        } else {
-            console.error('Error getting Zoho user info:', error);
-        }
-        return null;
-    }
+    // Return basic user info for session key authentication
+    return {
+        email: 'harvest.user@company.com',
+        full_name: 'Harvest Planner User',
+        user_id: 'session_user'
+    };
 }
 
 /**
- * Extracts token from Zoho API, URL parameters, or localStorage
- * @returns {Promise<string|null>} - The access token or null
+ * Extracts session key from URL parameters or localStorage
+ * @returns {string|null} - The session key or null
  */
-export async function getZohoToken() {
+export function getZohoToken() {
     console.log('🔍 getZohoToken called');
     console.log('🔍 Current URL:', window.location.href);
     
-    // First, try to get token from URL parameters (for embedded apps)
+    // Check for session key in URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     console.log('🔍 URL params:', Object.fromEntries(urlParams.entries()));
     
-    const urlToken = urlParams.get('access_token') || urlParams.get('token');
-    console.log('🔍 URL token found:', urlToken ? 'Yes' : 'No', urlToken ? `(${urlToken.substring(0, 20)}...)` : '');
+    const sessionKey = urlParams.get('key') || urlParams.get('session') || urlParams.get('auth');
+    console.log('🔍 Session key found:', sessionKey ? 'Yes' : 'No', sessionKey ? `(${sessionKey.substring(0, 10)}...)` : '');
     
-    if (urlToken) {
+    if (sessionKey) {
         // Store in localStorage for future use
-        localStorage.setItem('zoho_access_token', urlToken);
-        console.log('🔍 Token stored in localStorage');
-        return urlToken;
+        localStorage.setItem('zoho_access_token', sessionKey);
+        console.log('🔍 Session key stored in localStorage');
+        return sessionKey;
     }
     
     // Try to get from localStorage
-    const storedToken = localStorage.getItem('zoho_access_token');
-    console.log('🔍 Stored token found:', storedToken ? 'Yes' : 'No', storedToken ? `(${storedToken.substring(0, 20)}...)` : '');
+    const storedKey = localStorage.getItem('zoho_access_token');
+    console.log('🔍 Stored session key found:', storedKey ? 'Yes' : 'No', storedKey ? `(${storedKey.substring(0, 10)}...)` : '');
     
-    if (storedToken) {
-        return storedToken;
-    }
-    
-    // If no token found and we're in Zoho context, try to get from Zoho API
-    if (isZohoEmbedded()) {
-        console.log('🔍 Attempting to get token from Zoho API...');
-        try {
-            const zohoToken = await getTokenFromZohoAPI();
-            if (zohoToken) {
-                console.log('🔍 Token obtained from Zoho API');
-                localStorage.setItem('zoho_access_token', zohoToken);
-                return zohoToken;
-            }
-        } catch (error) {
-            console.warn('🔍 Failed to get token from Zoho API:', error);
-        }
-        
-        // Fallback: Check for token in other common locations
-        console.log('🔍 Checking for token in other locations...');
-        
-        // Debug: Check what's available in the window object
-        console.log('🔍 Window object keys:', Object.keys(window).filter(key => key.toLowerCase().includes('zoho')));
-        console.log('🔍 ZOHO object:', typeof window.ZOHO, window.ZOHO);
-        
-        // Check if there's a token in the parent window (if accessible)
-        try {
-            if (window.parent && window.parent !== window) {
-                const parentToken = window.parent.localStorage?.getItem('zoho_access_token');
-                if (parentToken) {
-                    console.log('🔍 Found token in parent window');
-                    localStorage.setItem('zoho_access_token', parentToken);
-                    return parentToken;
-                }
-            }
-        } catch (error) {
-            console.log('🔍 Cannot access parent window (cross-origin)');
-        }
-        
-        // Check for token in sessionStorage
-        const sessionToken = sessionStorage.getItem('zoho_access_token');
-        if (sessionToken) {
-            console.log('🔍 Found token in sessionStorage');
-            localStorage.setItem('zoho_access_token', sessionToken);
-            return sessionToken;
-        }
-        
-        // TEMPORARY: For testing, you can manually set a token
-        // Uncomment and replace with a real Zoho token for testing
-        // const testToken = 'YOUR_ZOHO_TOKEN_HERE';
-        // if (testToken && testToken !== 'YOUR_ZOHO_TOKEN_HERE') {
-        //     console.log('🔍 Using test token');
-        //     localStorage.setItem('zoho_access_token', testToken);
-        //     return testToken;
-        // }
-        
-        // TEMPORARY: Bypass authentication for testing in Zoho context
-        // Remove this in production!
-        console.log('🔍 TEMPORARY: Bypassing authentication for testing');
-        const bypassToken = '1000.NIW37ET37NPNRIIH3DOKBNK5POPCEB';
-        localStorage.setItem('zoho_access_token', bypassToken);
-        return bypassToken;
-    }
-    
-    return null;
+    return storedKey;
 }
 
-/**
- * Gets token from Zoho's embedded app API
- * @returns {Promise<string|null>} - The access token or null
- */
-async function getTokenFromZohoAPI() {
-    return new Promise((resolve) => {
-        // Wait for Zoho API to load if not immediately available
-        const checkZohoAPI = (attempts = 0) => {
-            if (attempts > 10) { // Max 5 seconds of waiting
-                console.log('🔍 Zoho API not available after waiting');
-                resolve(null);
-                return;
-            }
 
-            if (typeof window.ZOHO !== 'undefined' && window.ZOHO.embeddedApp) {
-                console.log('🔍 Zoho API available, getting token...');
-                window.ZOHO.embeddedApp.init().then(() => {
-                    window.ZOHO.embeddedApp.getAccessToken().then((token) => {
-                        console.log('🔍 Token from Zoho API:', token ? `(${token.substring(0, 20)}...)` : 'null');
-                        resolve(token);
-                    }).catch((error) => {
-                        console.warn('🔍 Error getting token from Zoho API:', error);
-                        resolve(null);
-                    });
-                }).catch((error) => {
-                    console.warn('🔍 Error initializing Zoho API:', error);
-                    resolve(null);
-                });
-            } else {
-                console.log(`🔍 Zoho API not ready, waiting... (attempt ${attempts + 1})`);
-                setTimeout(() => checkZohoAPI(attempts + 1), 500);
-            }
-        };
-
-        checkZohoAPI();
-    });
-}
 
 /**
  * Stores Zoho token in localStorage
@@ -320,32 +144,32 @@ export function useZohoAuth() {
             setLoading(true);
             
             try {
-                console.log('🔍 Starting Zoho authentication...');
-                const accessToken = await getZohoToken();
-                console.log('🔍 Token found:', accessToken ? 'Yes' : 'No', accessToken ? `(${accessToken.substring(0, 20)}...)` : '');
+                console.log('🔍 Starting session key authentication...');
+                const sessionKey = getZohoToken();
+                console.log('🔍 Session key found:', sessionKey ? 'Yes' : 'No', sessionKey ? `(${sessionKey.substring(0, 10)}...)` : '');
                 
-                if (!accessToken) {
-                    console.log('❌ No access token found');
+                if (!sessionKey) {
+                    console.log('❌ No session key found');
                     setLoading(false);
                     return;
                 }
 
-                console.log('🔍 Validating token...');
-                const isValid = await validateZohoToken(accessToken);
-                console.log('🔍 Token validation result:', isValid);
+                console.log('🔍 Validating session key...');
+                const isValid = await validateZohoToken(sessionKey);
+                console.log('🔍 Session key validation result:', isValid);
                 
                 if (!isValid) {
-                    console.log('❌ Token validation failed');
+                    console.log('❌ Session key validation failed');
                     clearZohoToken();
                     setLoading(false);
                     return;
                 }
 
                 console.log('🔍 Getting user info...');
-                const userInfo = await getZohoUserInfo(accessToken);
+                const userInfo = await getZohoUserInfo(sessionKey);
                 console.log('🔍 User info:', userInfo);
                 
-                setToken(accessToken);
+                setToken(sessionKey);
                 setIsAuthenticated(true);
                 setUser(userInfo);
                 console.log('✅ Authentication successful');
