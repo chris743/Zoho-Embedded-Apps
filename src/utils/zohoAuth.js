@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 
 /**
- * Simple Zoho Token Authentication
- * Just validates Zoho tokens for access control - no CRM integration
+ * Simple Session Key Authentication
+ * Validates session keys for access control
  */
 
 
@@ -12,7 +12,7 @@ import { useState, useEffect } from 'react';
  * @param {string} sessionKey - The session key
  * @returns {Promise<boolean>} - Whether the session key is valid
  */
-export async function validateZohoToken(sessionKey) {
+export async function validateSessionKey(sessionKey) {
     if (!sessionKey) {
         return false;
     }
@@ -35,7 +35,7 @@ export async function validateZohoToken(sessionKey) {
  * @param {string} sessionKey - The session key
  * @returns {Promise<Object|null>} - Basic user info or null if failed
  */
-export async function getZohoUserInfo(sessionKey) {
+export async function getUserInfo(sessionKey) {
     if (!sessionKey) {
         return null;
     }
@@ -52,8 +52,8 @@ export async function getZohoUserInfo(sessionKey) {
  * Extracts session key from URL parameters or localStorage
  * @returns {string|null} - The session key or null
  */
-export function getZohoToken() {
-    console.log('🔍 getZohoToken called');
+export function getSessionKey() {
+    console.log('🔍 getSessionKey called');
     console.log('🔍 Current URL:', window.location.href);
     
     // Check for session key in URL parameters
@@ -65,13 +65,13 @@ export function getZohoToken() {
     
     if (sessionKey) {
         // Store in localStorage for future use
-        localStorage.setItem('zoho_access_token', sessionKey);
+        localStorage.setItem('harvest_session_key', sessionKey);
         console.log('🔍 Session key stored in localStorage');
         return sessionKey;
     }
     
     // Try to get from localStorage
-    const storedKey = localStorage.getItem('zoho_access_token');
+    const storedKey = localStorage.getItem('harvest_session_key');
     console.log('🔍 Stored session key found:', storedKey ? 'Yes' : 'No', storedKey ? `(${storedKey.substring(0, 10)}...)` : '');
     
     return storedKey;
@@ -80,52 +80,21 @@ export function getZohoToken() {
 
 
 /**
- * Stores Zoho token in localStorage
- * @param {string} token - The access token
+ * Stores session key in localStorage
+ * @param {string} token - The session key
  */
-export function setZohoToken(token) {
-    localStorage.setItem('zoho_access_token', token);
+export function setSessionKey(token) {
+    localStorage.setItem('harvest_session_key', token);
 }
 
 /**
- * Removes Zoho token from localStorage
+ * Removes session key from localStorage
  */
-export function clearZohoToken() {
-    localStorage.removeItem('zoho_access_token');
+export function clearSessionKey() {
+    localStorage.removeItem('harvest_session_key');
 }
 
-/**
- * Checks if the app is running in Zoho CRM context
- * @returns {boolean} - Whether the app is embedded in Zoho CRM
- */
-export function isZohoEmbedded() {
-    // Check if we're in an iframe (common for embedded apps)
-    const isInIframe = window.self !== window.top;
-    console.log('🔍 isZohoEmbedded - isInIframe:', isInIframe);
-    
-    // Check for Zoho-specific URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasZohoParams = urlParams.has('access_token') || urlParams.has('token') || urlParams.has('zoho');
-    console.log('🔍 isZohoEmbedded - hasZohoParams:', hasZohoParams);
-    
-    // Check if parent window is Zoho (with error handling for cross-origin)
-    let isZohoParent = false;
-    try {
-        if (window.parent && window.parent.location) {
-            isZohoParent = window.parent.location.hostname.includes('zoho');
-            console.log('🔍 isZohoEmbedded - isZohoParent:', isZohoParent);
-        }
-    } catch (error) {
-        // Cross-origin access blocked - this is expected when embedded
-        // If we can't access parent location, we're likely in an iframe
-        isZohoParent = isInIframe;
-        console.log('🔍 isZohoEmbedded - cross-origin error, using isInIframe:', isZohoParent);
-    }
-    
-    const result = isInIframe || hasZohoParams || isZohoParent;
-    console.log('🔍 isZohoEmbedded - final result:', result);
-    return result;
-}
+
 
 
 
@@ -145,7 +114,7 @@ export function useZohoAuth() {
             
             try {
                 console.log('🔍 Starting session key authentication...');
-                const sessionKey = getZohoToken();
+                const sessionKey = getSessionKey();
                 console.log('🔍 Session key found:', sessionKey ? 'Yes' : 'No', sessionKey ? `(${sessionKey.substring(0, 10)}...)` : '');
                 
                 if (!sessionKey) {
@@ -155,18 +124,18 @@ export function useZohoAuth() {
                 }
 
                 console.log('🔍 Validating session key...');
-                const isValid = await validateZohoToken(sessionKey);
+                const isValid = await validateSessionKey(sessionKey);
                 console.log('🔍 Session key validation result:', isValid);
                 
                 if (!isValid) {
                     console.log('❌ Session key validation failed');
-                    clearZohoToken();
+                    clearSessionKey();
                     setLoading(false);
                     return;
                 }
 
                 console.log('🔍 Getting user info...');
-                const userInfo = await getZohoUserInfo(sessionKey);
+                const userInfo = await getUserInfo(sessionKey);
                 console.log('🔍 User info:', userInfo);
                 
                 setToken(sessionKey);
@@ -175,7 +144,7 @@ export function useZohoAuth() {
                 console.log('✅ Authentication successful');
             } catch (error) {
                 console.error('❌ Error during authentication initialization:', error);
-                clearZohoToken();
+                clearSessionKey();
             } finally {
                 setLoading(false);
             }
@@ -184,14 +153,14 @@ export function useZohoAuth() {
         initializeAuth();
     }, []);
 
-    const login = (accessToken) => {
-        setZohoToken(accessToken);
-        setToken(accessToken);
+    const login = (sessionKey) => {
+        setSessionKey(sessionKey);
+        setToken(sessionKey);
         setIsAuthenticated(true);
     };
 
     const logout = () => {
-        clearZohoToken();
+        clearSessionKey();
         setToken(null);
         setIsAuthenticated(false);
         setUser(null);
@@ -203,7 +172,6 @@ export function useZohoAuth() {
         loading,
         token,
         login,
-        logout,
-        isZohoEmbedded: isZohoEmbedded()
+        logout
     };
 }
