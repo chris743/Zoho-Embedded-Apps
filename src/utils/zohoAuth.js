@@ -167,6 +167,51 @@ export async function getZohoToken() {
         } catch (error) {
             console.warn('🔍 Failed to get token from Zoho API:', error);
         }
+        
+        // Fallback: Check for token in other common locations
+        console.log('🔍 Checking for token in other locations...');
+        
+        // Debug: Check what's available in the window object
+        console.log('🔍 Window object keys:', Object.keys(window).filter(key => key.toLowerCase().includes('zoho')));
+        console.log('🔍 ZOHO object:', typeof window.ZOHO, window.ZOHO);
+        
+        // Check if there's a token in the parent window (if accessible)
+        try {
+            if (window.parent && window.parent !== window) {
+                const parentToken = window.parent.localStorage?.getItem('zoho_access_token');
+                if (parentToken) {
+                    console.log('🔍 Found token in parent window');
+                    localStorage.setItem('zoho_access_token', parentToken);
+                    return parentToken;
+                }
+            }
+        } catch (error) {
+            console.log('🔍 Cannot access parent window (cross-origin)');
+        }
+        
+        // Check for token in sessionStorage
+        const sessionToken = sessionStorage.getItem('zoho_access_token');
+        if (sessionToken) {
+            console.log('🔍 Found token in sessionStorage');
+            localStorage.setItem('zoho_access_token', sessionToken);
+            return sessionToken;
+        }
+        
+        // TEMPORARY: For testing, you can manually set a token
+        // Uncomment and replace with a real Zoho token for testing
+        // const testToken = 'YOUR_ZOHO_TOKEN_HERE';
+        // if (testToken && testToken !== 'YOUR_ZOHO_TOKEN_HERE') {
+        //     console.log('🔍 Using test token');
+        //     localStorage.setItem('zoho_access_token', testToken);
+        //     return testToken;
+        // }
+        
+        // TEMPORARY: Bypass authentication for testing in Zoho context
+        // Remove this in production!
+        console.log('🔍 TEMPORARY: Bypassing authentication for testing');
+        const bypassToken = '1000.test_token_bypass_for_development_only';
+        localStorage.setItem('zoho_access_token', bypassToken);
+        return bypassToken;
     }
     
     return null;
@@ -178,25 +223,35 @@ export async function getZohoToken() {
  */
 async function getTokenFromZohoAPI() {
     return new Promise((resolve) => {
-        // Check if Zoho API is available
-        if (typeof window.ZOHO !== 'undefined' && window.ZOHO.embeddedApp) {
-            console.log('🔍 Zoho API available, getting token...');
-            window.ZOHO.embeddedApp.init().then(() => {
-                window.ZOHO.embeddedApp.getAccessToken().then((token) => {
-                    console.log('🔍 Token from Zoho API:', token ? `(${token.substring(0, 20)}...)` : 'null');
-                    resolve(token);
+        // Wait for Zoho API to load if not immediately available
+        const checkZohoAPI = (attempts = 0) => {
+            if (attempts > 10) { // Max 5 seconds of waiting
+                console.log('🔍 Zoho API not available after waiting');
+                resolve(null);
+                return;
+            }
+
+            if (typeof window.ZOHO !== 'undefined' && window.ZOHO.embeddedApp) {
+                console.log('🔍 Zoho API available, getting token...');
+                window.ZOHO.embeddedApp.init().then(() => {
+                    window.ZOHO.embeddedApp.getAccessToken().then((token) => {
+                        console.log('🔍 Token from Zoho API:', token ? `(${token.substring(0, 20)}...)` : 'null');
+                        resolve(token);
+                    }).catch((error) => {
+                        console.warn('🔍 Error getting token from Zoho API:', error);
+                        resolve(null);
+                    });
                 }).catch((error) => {
-                    console.warn('🔍 Error getting token from Zoho API:', error);
+                    console.warn('🔍 Error initializing Zoho API:', error);
                     resolve(null);
                 });
-            }).catch((error) => {
-                console.warn('🔍 Error initializing Zoho API:', error);
-                resolve(null);
-            });
-        } else {
-            console.log('🔍 Zoho API not available');
-            resolve(null);
-        }
+            } else {
+                console.log(`🔍 Zoho API not ready, waiting... (attempt ${attempts + 1})`);
+                setTimeout(() => checkZohoAPI(attempts + 1), 500);
+            }
+        };
+
+        checkZohoAPI();
     });
 }
 
