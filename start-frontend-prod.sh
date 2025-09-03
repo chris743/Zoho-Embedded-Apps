@@ -16,8 +16,14 @@ if [ $? -eq 0 ]; then
         npm install -g serve
     fi
     
-    # Start the production server
-    serve -s build -l 3000
+    # Start the production server in background with nohup
+    nohup serve -s build -l 3000 > logs/frontend.log 2>&1 &
+    echo $! > logs/frontend.pid
+    
+    echo "✅ Frontend started in background!"
+    echo "📋 PID: $(cat logs/frontend.pid)"
+    echo "📊 Logs: tail -f logs/frontend.log"
+    echo "⏹️  Stop: kill $(cat logs/frontend.pid)"
 else
     echo "❌ Build failed!"
     exit 1

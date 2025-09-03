@@ -8,8 +8,32 @@
 - .NET 9.0 SDK installed
 - PM2 installed globally
 
-### Quick Setup
+### Quick Setup (SSH-Safe)
 
+#### **Option 1: Simple Background Process (Recommended)**
+1. **Make scripts executable:**
+   ```bash
+   chmod +x start-frontend-prod.sh
+   chmod +x stop-frontend.sh
+   chmod +x check-status.sh
+   ```
+
+2. **Start the application:**
+   ```bash
+   ./start-frontend-prod.sh
+   ```
+
+3. **Check status:**
+   ```bash
+   ./check-status.sh
+   ```
+
+4. **Stop when needed:**
+   ```bash
+   ./stop-frontend.sh
+   ```
+
+#### **Option 2: PM2 Process Manager**
 1. **Install PM2 globally:**
    ```bash
    npm install -g pm2
@@ -17,13 +41,13 @@
 
 2. **Make scripts executable:**
    ```bash
-   chmod +x start-production.sh
+   chmod +x deploy-production.sh
    chmod +x monitor.sh
    ```
 
 3. **Start the application:**
    ```bash
-   ./start-production.sh
+   ./deploy-production.sh
    ```
 
 4. **Check status:**
