@@ -14,7 +14,6 @@ export function WeeklyPlannerBoard({
   svc,
   weekStart,
   onWeekChange,
-  onReload,
 }) {
   const start = useMemo(() => startOfWeek(weekStart || new Date()), [weekStart]);
   const days = useMemo(() => sevenDays(start), [start]);
@@ -32,18 +31,15 @@ export function WeeklyPlannerBoard({
   const bucketsRef = useRef(buckets);
   bucketsRef.current = buckets;
   
-  // Track if we have pending drag operations to avoid rebuilding buckets
-  const [hasPendingDrag, setHasPendingDrag] = useState(false);
+
   
 
 
-  // Build buckets when week or plans change (but not during drag operations)
+  // Build buckets when week or plans change
   useEffect(() => {
-    if (!hasPendingDrag) {
-      const newBuckets = buildBuckets(plans, dayKeys, lookupMaps);
-      setBuckets(newBuckets);
-    }
-  }, [plans, dayKeys, lookupMaps, hasPendingDrag]);
+    const newBuckets = buildBuckets(plans, dayKeys, lookupMaps);
+    setBuckets(newBuckets);
+  }, [plans, dayKeys, lookupMaps]);
 
   // Memoized callbacks to prevent unnecessary re-renders
   const handleEdit = useCallback((plan) => {
@@ -61,9 +57,6 @@ export function WeeklyPlannerBoard({
 
     const srcKey = source.droppableId;
     const dstKey = destination.droppableId;
-    
-    // Set pending drag flag to prevent bucket rebuilding
-    setHasPendingDrag(true);
     
     // Optimistic update - immediate UI feedback
     setBuckets(prev => {
@@ -89,19 +82,15 @@ export function WeeklyPlannerBoard({
       return newBuckets;
     });
 
-    // Persist to server in background
+    // Persist to server in background - no refresh needed
     try {
       const newDate = new Date(destination.droppableId + "T00:00:00").toISOString();
       await svc.update(draggableId, { date: newDate });
-      
-      // Clear pending drag flag after successful update
-      setHasPendingDrag(false);
     } catch (err) {
       console.error("❌ Move failed:", err);
       // Revert on error by rebuilding from plans
       const revertedBuckets = buildBuckets(plans, dayKeys, lookupMaps);
       setBuckets(revertedBuckets);
-      setHasPendingDrag(false);
       
       const errorMsg = err?.response?.data?.title || err?.message || "Failed to move plan";
       alert(errorMsg);
