@@ -125,10 +125,10 @@ export async function getZohoUserInfo(accessToken) {
 }
 
 /**
- * Extracts token from URL parameters or localStorage
- * @returns {string|null} - The access token or null
+ * Extracts token from Zoho API, URL parameters, or localStorage
+ * @returns {Promise<string|null>} - The access token or null
  */
-export function getZohoToken() {
+export async function getZohoToken() {
     console.log('🔍 getZohoToken called');
     console.log('🔍 Current URL:', window.location.href);
     
@@ -150,11 +150,54 @@ export function getZohoToken() {
     const storedToken = localStorage.getItem('zoho_access_token');
     console.log('🔍 Stored token found:', storedToken ? 'Yes' : 'No', storedToken ? `(${storedToken.substring(0, 20)}...)` : '');
     
-    // TEMPORARY: For testing, you can manually set a token in localStorage
-    // Uncomment the line below and replace with a real Zoho token for testing
-    // localStorage.setItem('zoho_access_token', 'YOUR_ZOHO_TOKEN_HERE');
+    if (storedToken) {
+        return storedToken;
+    }
     
-    return storedToken;
+    // If no token found and we're in Zoho context, try to get from Zoho API
+    if (isZohoEmbedded()) {
+        console.log('🔍 Attempting to get token from Zoho API...');
+        try {
+            const zohoToken = await getTokenFromZohoAPI();
+            if (zohoToken) {
+                console.log('🔍 Token obtained from Zoho API');
+                localStorage.setItem('zoho_access_token', zohoToken);
+                return zohoToken;
+            }
+        } catch (error) {
+            console.warn('🔍 Failed to get token from Zoho API:', error);
+        }
+    }
+    
+    return null;
+}
+
+/**
+ * Gets token from Zoho's embedded app API
+ * @returns {Promise<string|null>} - The access token or null
+ */
+async function getTokenFromZohoAPI() {
+    return new Promise((resolve) => {
+        // Check if Zoho API is available
+        if (typeof window.ZOHO !== 'undefined' && window.ZOHO.embeddedApp) {
+            console.log('🔍 Zoho API available, getting token...');
+            window.ZOHO.embeddedApp.init().then(() => {
+                window.ZOHO.embeddedApp.getAccessToken().then((token) => {
+                    console.log('🔍 Token from Zoho API:', token ? `(${token.substring(0, 20)}...)` : 'null');
+                    resolve(token);
+                }).catch((error) => {
+                    console.warn('🔍 Error getting token from Zoho API:', error);
+                    resolve(null);
+                });
+            }).catch((error) => {
+                console.warn('🔍 Error initializing Zoho API:', error);
+                resolve(null);
+            });
+        } else {
+            console.log('🔍 Zoho API not available');
+            resolve(null);
+        }
+    });
 }
 
 /**
@@ -223,7 +266,7 @@ export function useZohoAuth() {
             
             try {
                 console.log('🔍 Starting Zoho authentication...');
-                const accessToken = getZohoToken();
+                const accessToken = await getZohoToken();
                 console.log('🔍 Token found:', accessToken ? 'Yes' : 'No', accessToken ? `(${accessToken.substring(0, 20)}...)` : '');
                 
                 if (!accessToken) {
