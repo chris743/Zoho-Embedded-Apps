@@ -113,11 +113,16 @@ export default function HarvestPlannerPage() {
 const filtered = rows.filter(r => {
     if (!r.date) return false;
     const planDate = new Date(r.date);
-    const fromDate = dateFrom ? new Date(dateFrom.toISOString().slice(0, 10)) : null;
-    const toDate = dateTo ? new Date(dateTo.toISOString().slice(0, 10)) : null;
+    const planDateOnly = new Date(planDate.getFullYear(), planDate.getMonth(), planDate.getDate());
     
-    if (fromDate && planDate < fromDate) return false;
-    if (toDate && planDate > toDate) return false;
+    if (dateFrom) {
+        const fromDateOnly = new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate());
+        if (planDateOnly < fromDateOnly) return false;
+    }
+    if (dateTo) {
+        const toDateOnly = new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate());
+        if (planDateOnly > toDateOnly) return false;
+    }
     return true;
 }).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
