@@ -18,7 +18,7 @@ export function BlockSelector({ blocks = [], value, onChange }) {
         .filter((b) => {
           const blockId = String(b.id ?? "");
           const inactiveFlag = b.inactiveflag ?? b.INACTIVEFLAG ?? b.inactiveFlag;
-          return blockId.startsWith("2") && inactiveFlag === "n";
+          return blockId.startsWith("2") && inactiveFlag === "N";
         })
         .map((b) => {
           const source = b.source_database ?? b.sourceDatabase ?? "";
