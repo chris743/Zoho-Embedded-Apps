@@ -2,8 +2,6 @@ import React from 'react';
 import { Box, useTheme } from '@mui/material';
 import { Sidebar } from './Sidebar';
 
-const SIDEBAR_COLLAPSED_WIDTH = 64;
-
 export function AppLayout({ children }) {
     const theme = useTheme();
 
@@ -16,7 +14,6 @@ export function AppLayout({ children }) {
                     flexGrow: 1,
                     backgroundColor: theme.palette.grey[50],
                     minHeight: '100vh',
-                    marginLeft: `${SIDEBAR_COLLAPSED_WIDTH}px`,
                     transition: theme.transitions.create('margin', {
                         easing: theme.transitions.easing.sharp,
                         duration: theme.transitions.duration.leavingScreen,

@@ -18,10 +18,8 @@ import {
 import {
     Menu as MenuIcon,
     ChevronLeft as ChevronLeftIcon,
-    Home as HomeIcon,
     People as PeopleIcon,
     CalendarMonth as CalendarIcon,
-    Business as BusinessIcon,
     ExpandLess,
     ExpandMore
 } from '@mui/icons-material';
