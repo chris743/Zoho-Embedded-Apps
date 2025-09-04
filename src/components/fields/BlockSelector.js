@@ -11,20 +11,27 @@ import Autocomplete from "@mui/material/Autocomplete";
  */
 export function BlockSelector({ blocks = [], value, onChange }) {
   // Normalize incoming blocks (handle API casing like GABLOCKIDX/NAME/GrowerName)
+  // Filter to only blocks where ID starts with "2" and inactiveflag == "n"
   const options = useMemo(
     () =>
-      (blocks || []).map((b) => {
-        const source = b.source_database ?? b.sourceDatabase ?? "";
-        const idx =
-          b.gablockidx;
-        const name = b.name;
-        return {
-          key: `${source}:${idx}`,
-          source_database: source,
-          id: idx,
-          label: `${b.id} — ${name || "(no name)"}`,
-        };
-      }),
+      (blocks || [])
+        .filter((b) => {
+          const blockId = String(b.id ?? "");
+          const inactiveFlag = b.inactiveflag ?? b.INACTIVEFLAG ?? b.inactiveFlag;
+          return blockId.startsWith("2") && inactiveFlag === "n";
+        })
+        .map((b) => {
+          const source = b.source_database ?? b.sourceDatabase ?? "";
+          const idx =
+            b.gablockidx;
+          const name = b.name;
+          return {
+            key: `${source}:${idx}`,
+            source_database: source,
+            id: idx,
+            label: `${b.id} — ${name || "(no name)"}`,
+          };
+        }),
     [blocks]
   );
 

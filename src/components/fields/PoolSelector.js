@@ -11,19 +11,25 @@ import Autocomplete from "@mui/material/Autocomplete";
  */
 export function PoolSelector({ pools = [], value, onChange }) {
   // Normalize incoming pool objects (handles different casings/keys)
+  // Filter out pools where ICCCLOSEDFLAG == "N"
   const options = useMemo(() => {
-    return (pools || []).map((p) => {
-      const poolId =
-        p.pool_id ?? p.poolid ?? p.poolidx ?? p.POOL_ID ?? p.POOLID ?? p.POOLIDX ?? p.id;
-      const code = p.code ?? p.CODE ?? p.id ?? "";       // display code/name
-      const descr = p.descr ?? p.DESCR ?? p.description ?? "";
-      const key = String(poolId ?? code);
-      return {
-        key,
-        pool_id: poolId ?? null,
-        label: `${code || poolId}${descr ? ` - ${descr}` : ""}`,
-      };
-    });
+    return (pools || [])
+      .filter((p) => {
+        const iccClosedFlag = p.ICCCLOSEDFLAG ?? p.iccclosedflag ?? p.iccClosedFlag;
+        return iccClosedFlag !== "N";
+      })
+      .map((p) => {
+        const poolId =
+          p.pool_id ?? p.poolid ?? p.poolidx ?? p.POOL_ID ?? p.POOLID ?? p.POOLIDX ?? p.id;
+        const code = p.code ?? p.CODE ?? p.id ?? "";       // display code/name
+        const descr = p.descr ?? p.DESCR ?? p.description ?? "";
+        const key = String(poolId ?? code);
+        return {
+          key,
+          pool_id: poolId ?? null,
+          label: `${code || poolId}${descr ? ` - ${descr}` : ""}`,
+        };
+      });
   }, [pools]);
 
   const selected =
