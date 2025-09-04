@@ -31,12 +31,6 @@ const COLLAPSED_WIDTH = 64;
 
 const menuItems = [
     {
-        id: 'home',
-        label: 'Home',
-        icon: HomeIcon,
-        path: '/'
-    },
-    {
         id: 'harvest',
         label: 'Harvest Management',
         icon: CalendarIcon,
@@ -262,18 +256,6 @@ export function Sidebar() {
                             }}
                         >
                             <ChevronLeftIcon />
-                        </IconButton>
-                    )}
-                    {collapsed && (
-                        <IconButton 
-                            onClick={handleToggleCollapse}
-                            size="small"
-                            sx={{
-                                border: `1px solid ${theme.palette.divider}`,
-                                borderRadius: 1,
-                            }}
-                        >
-                            <BusinessIcon color="primary" />
                         </IconButton>
                     )}
                 </Box>
