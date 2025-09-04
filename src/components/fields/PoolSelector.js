@@ -15,7 +15,7 @@ export function PoolSelector({ pools = [], value, onChange }) {
   const options = useMemo(() => {
     return (pools || [])
       .filter((p) => {
-        const iccClosedFlag = p.ICCCLOSEDFLAG ?? p.iccclosedflag ?? p.iccClosedFlag;
+        const iccClosedFlag = p.icclosedflag;
         return iccClosedFlag !== "N";
       })
       .map((p) => {
