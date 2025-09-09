@@ -43,7 +43,23 @@ public HarvestPlansController(AppDbContext db) => _db = db;
         x.deliver_to,
         x.packed_by,
         x.date,
-        x.bins))
+        x.bins,
+        x.Block != null ? new BlockDto(
+            x.Block.id,
+            x.Block.name,
+            x.Block.blocktype,
+            x.Block.growerName,
+            x.Block.growerID,
+            x.Block.acres,
+            x.Block.district,
+            x.Block.cropyeardescr,
+            x.Block.latitude,
+            x.Block.longitude
+        ) : null,
+        x.Commodity != null ? new CommodityDto(
+            x.Commodity.invoiceCommodity,
+            x.Commodity.commodity
+        ) : null))
         .ToListAsync(ct);
         return Ok(rows);
     }
@@ -55,7 +71,23 @@ public async Task<ActionResult<HarvestPlanDto>> Get(Guid id, CancellationToken c
 {
 var x = await _db.HarvestPlans.AsNoTracking().FirstOrDefaultAsync(p => p.id == id, ct);
 if (x is null) return NotFound();
-return new HarvestPlanDto(x.id, x.grower_block_source_database, x.grower_block_id, x.planned_bins, x.contractor_id, x.harvesting_rate, x.hauler_id, x.hauling_rate, x.forklift_contractor_id, x.forklift_rate, x.pool_id, x.notes_general, x.deliver_to, x.packed_by, x.date, x.bins);
+return new HarvestPlanDto(x.id, x.grower_block_source_database, x.grower_block_id, x.planned_bins, x.contractor_id, x.harvesting_rate, x.hauler_id, x.hauling_rate, x.forklift_contractor_id, x.forklift_rate, x.pool_id, x.notes_general, x.deliver_to, x.packed_by, x.date, x.bins,
+    x.Block != null ? new BlockDto(
+        x.Block.id,
+        x.Block.name,
+        x.Block.blocktype,
+        x.Block.growerName,
+        x.Block.growerID,
+        x.Block.acres,
+        x.Block.district,
+        x.Block.cropyeardescr,
+        x.Block.latitude,
+        x.Block.longitude
+    ) : null,
+    x.Commodity != null ? new CommodityDto(
+        x.Commodity.invoiceCommodity,
+        x.Commodity.commodity
+    ) : null);
 }
 
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import {
     Box,
     Drawer,
@@ -12,6 +13,7 @@ import {
     Typography,
     Divider,
     Collapse,
+    Button,
     useTheme,
     alpha
 } from '@mui/material';
@@ -20,6 +22,8 @@ import {
     ChevronLeft as ChevronLeftIcon,
     People as PeopleIcon,
     CalendarMonth as CalendarIcon,
+    Settings as SettingsIcon,
+    Logout as LogoutIcon,
     ExpandLess,
     ExpandMore
 } from '@mui/icons-material';
@@ -37,6 +41,11 @@ const menuItems = [
                 id: 'harvest-plans',
                 label: 'Harvest Plans',
                 path: '/harvestplans'
+            },
+            {
+                id: 'process-plans',
+                label: 'Process Plans',
+                path: '/processplans'
             }
         ]
     },
@@ -45,6 +54,20 @@ const menuItems = [
         label: 'Contractors',
         icon: PeopleIcon,
         path: '/harvestcontractors'
+    },
+    {
+        id: 'admin',
+        label: 'Administration',
+        icon: SettingsIcon,
+        requiresRole: ['admin', 'manager'],
+        children: [
+            {
+                id: 'users',
+                label: 'User Management',
+                path: '/users',
+                requiresRole: ['admin']
+            }
+        ]
     }
 ];
 
@@ -54,6 +77,18 @@ export function Sidebar() {
     const navigate = useNavigate();
     const location = useLocation();
     const theme = useTheme();
+    const { user, logout } = useAuth();
+
+    const hasRole = (requiredRoles) => {
+        if (!requiredRoles || requiredRoles.length === 0) return true;
+        if (!user?.role) return false;
+        return requiredRoles.includes(user.role);
+    };
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+    };
 
     const handleToggleCollapse = () => {
         setCollapsed(!collapsed);
@@ -91,10 +126,13 @@ export function Sidebar() {
     };
 
     const renderMenuItem = (item) => {
+        // Check if user has permission to see this item
+        if (!hasRole(item.requiresRole)) return null;
+        
         const hasChildren = item.children && item.children.length > 0;
         const isExpanded = expandedItems[item.id];
         const active = item.path ? isActive(item.path) : 
-                      item.children?.some(child => isActive(child.path));
+                      item.children?.some(child => hasRole(child.requiresRole) && isActive(child.path));
 
         return (
             <React.Fragment key={item.id}>
@@ -148,7 +186,7 @@ export function Sidebar() {
                 {!collapsed && hasChildren && (
                     <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                         <List component="div" disablePadding>
-                            {item.children.map((child) => (
+                            {item.children.filter(child => hasRole(child.requiresRole)).map((child) => (
                                 <ListItem key={child.id} disablePadding>
                                     <ListItemButton
                                         onClick={() => handleSubItemClick(child.path)}
@@ -227,6 +265,8 @@ export function Sidebar() {
                         overflowX: 'hidden',
                         backgroundColor: theme.palette.background.paper,
                         borderRight: `1px solid ${theme.palette.divider}`,
+                        display: 'flex',
+                        flexDirection: 'column',
                     },
                 }}
             >
@@ -260,9 +300,38 @@ export function Sidebar() {
                 
                 <Divider />
                 
-                <List sx={{ pt: 1 }}>
+                <List sx={{ pt: 1, flexGrow: 1 }}>
                     {menuItems.map(renderMenuItem)}
                 </List>
+
+                {/* User Section */}
+                {!collapsed && (
+                    <>
+                        <Divider />
+                        <Box sx={{ p: 2 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                                Signed in as
+                            </Typography>
+                            <Typography variant="body2" fontWeight={600} sx={{ mb: 2 }}>
+                                {user?.fullName || user?.username || 'User'}
+                            </Typography>
+                            <Button
+                                fullWidth
+                                variant="outlined"
+                                size="small"
+                                startIcon={<LogoutIcon />}
+                                onClick={handleLogout}
+                                sx={{
+                                    borderRadius: 1,
+                                    textTransform: 'none',
+                                    fontWeight: 500
+                                }}
+                            >
+                                Sign Out
+                            </Button>
+                        </Box>
+                    </>
+                )}
             </Drawer>
         </>
     );

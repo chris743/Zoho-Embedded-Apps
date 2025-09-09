@@ -1,0 +1,173 @@
+DATABASE SCHEMA ADDITIONS FOR AUTHENTICATION SYSTEM
+========================================================
+
+The following tables and columns need to be added to support the username/password authentication system:
+
+1. USERS TABLE
+==============
+Table Name: Users (or similar naming convention)
+
+Required Columns:
+- id (INT, PRIMARY KEY, AUTO_INCREMENT)
+- username (VARCHAR(50), UNIQUE, NOT NULL)
+- email (VARCHAR(255), UNIQUE, NULLABLE)
+- password_hash (VARCHAR(255), NOT NULL) - Store bcrypt/argon2 hash, never plain text
+- full_name (VARCHAR(255), NULLABLE)
+- role (VARCHAR(20), NOT NULL) - Values: 'admin', 'manager', 'user', 'readonly'
+- is_active (BOOLEAN, DEFAULT TRUE)
+- created_at (DATETIME, DEFAULT CURRENT_TIMESTAMP)
+- updated_at (DATETIME, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)
+- created_by_user_id (INT, FOREIGN KEY to Users.id, NULLABLE)
+- last_login (DATETIME, NULLABLE)
+- password_changed_at (DATETIME, NULLABLE)
+- failed_login_attempts (INT, DEFAULT 0)
+- locked_until (DATETIME, NULLABLE) - For account lockout after failed attempts
+
+Indexes:
+- UNIQUE INDEX on username
+- UNIQUE INDEX on email
+- INDEX on role
+- INDEX on is_active
+- INDEX on created_by_user_id
+
+2. USER_SESSIONS TABLE (Optional - for session management)
+==========================================================
+Table Name: UserSessions
+
+Required Columns:
+- id (INT, PRIMARY KEY, AUTO_INCREMENT)
+- user_id (INT, FOREIGN KEY to Users.id, NOT NULL)
+- token_hash (VARCHAR(255), UNIQUE, NOT NULL) - Hashed version of JWT token
+- expires_at (DATETIME, NOT NULL)
+- created_at (DATETIME, DEFAULT CURRENT_TIMESTAMP)
+- ip_address (VARCHAR(45), NULLABLE) - Supports IPv6
+- user_agent (TEXT, NULLABLE)
+- is_active (BOOLEAN, DEFAULT TRUE)
+
+Indexes:
+- INDEX on user_id
+- INDEX on token_hash
+- INDEX on expires_at
+- INDEX on is_active
+
+3. PASSWORD_RESET_TOKENS TABLE (Optional - for password reset functionality)
+============================================================================
+Table Name: PasswordResetTokens
+
+Required Columns:
+- id (INT, PRIMARY KEY, AUTO_INCREMENT)
+- user_id (INT, FOREIGN KEY to Users.id, NOT NULL)
+- token_hash (VARCHAR(255), UNIQUE, NOT NULL)
+- expires_at (DATETIME, NOT NULL)
+- created_at (DATETIME, DEFAULT CURRENT_TIMESTAMP)
+- used_at (DATETIME, NULLABLE)
+- is_used (BOOLEAN, DEFAULT FALSE)
+
+Indexes:
+- INDEX on user_id
+- INDEX on token_hash
+- INDEX on expires_at
+- INDEX on is_used
+
+4. AUDIT_LOG TABLE (Optional - for security auditing)
+=====================================================
+Table Name: AuditLog
+
+Required Columns:
+- id (INT, PRIMARY KEY, AUTO_INCREMENT)
+- user_id (INT, FOREIGN KEY to Users.id, NULLABLE)
+- action (VARCHAR(100), NOT NULL) - e.g., 'login', 'logout', 'password_change', 'user_created'
+- resource_type (VARCHAR(50), NULLABLE) - e.g., 'user', 'contractor', 'harvest_plan'
+- resource_id (INT, NULLABLE)
+- ip_address (VARCHAR(45), NULLABLE)
+- user_agent (TEXT, NULLABLE)
+- details (JSON, NULLABLE) - Additional context data
+- created_at (DATETIME, DEFAULT CURRENT_TIMESTAMP)
+
+Indexes:
+- INDEX on user_id
+- INDEX on action
+- INDEX on resource_type
+- INDEX on resource_id
+- INDEX on created_at
+
+5. SAMPLE INITIAL DATA
+======================
+
+Default Admin User (Run after table creation):
+```sql
+INSERT INTO Users (username, email, password_hash, full_name, role, is_active, created_at) 
+VALUES (
+    'admin', 
+    'admin@yourdomain.com', 
+    '$2b$12$HASH_GOES_HERE', -- Replace with actual bcrypt hash of default password
+    'System Administrator', 
+    'admin', 
+    TRUE, 
+    NOW()
+);
+```
+
+6. API ENDPOINTS NEEDED
+=======================
+
+The following API endpoints should be implemented to support the authentication system:
+
+Authentication Endpoints:
+- POST /api/v1/auth/login
+- POST /api/v1/auth/logout
+- GET /api/v1/auth/verify
+- POST /api/v1/auth/refresh
+
+User Management Endpoints:
+- GET /api/v1/users (list users)
+- POST /api/v1/users (create user)
+- GET /api/v1/users/:id (get user details)
+- PUT /api/v1/users/:id (update user)
+- DELETE /api/v1/users/:id (delete user)
+- POST /api/v1/users/:id/reset-password (admin reset password)
+- POST /api/v1/users/change-password (user change own password)
+
+7. SECURITY CONSIDERATIONS
+==========================
+
+- NEVER store plain text passwords - always use bcrypt or argon2
+- Use JWT tokens with reasonable expiration times (15-60 minutes)
+- Implement refresh tokens for longer sessions
+- Add rate limiting to prevent brute force attacks
+- Implement account lockout after failed login attempts
+- Log all authentication attempts for security monitoring
+- Use HTTPS in production
+- Validate and sanitize all input data
+- Implement proper CORS headers
+
+8. ENVIRONMENT VARIABLES NEEDED
+===============================
+
+Add these to your application configuration:
+
+- JWT_SECRET (strong random string for signing JWT tokens)
+- JWT_EXPIRES_IN (e.g., "1h" for 1 hour)
+- JWT_REFRESH_SECRET (separate secret for refresh tokens)
+- JWT_REFRESH_EXPIRES_IN (e.g., "7d" for 7 days)
+- BCRYPT_ROUNDS (recommended: 12)
+- MAX_LOGIN_ATTEMPTS (recommended: 5)
+- LOCKOUT_DURATION_MINUTES (recommended: 15)
+
+9. TESTING CHECKLIST
+====================
+
+After implementation, test:
+□ User login with valid credentials
+□ User login with invalid credentials
+□ Token expiration and refresh
+□ Role-based access control
+□ User creation by admin
+□ User editing by admin
+□ Password reset functionality
+□ Account lockout after failed attempts
+□ Logout functionality
+□ Session persistence across browser refresh
+□ Zoho authentication still works
+□ External user authentication works
+□ Menu visibility based on roles

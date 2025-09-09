@@ -4,7 +4,7 @@ import {
 } from "@mui/material";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import formatDate from "./utils/dateutils";
+import { formatDate } from "../../utils/dateUtils";
 
 // Scout Images Carousel Component
 export function ScoutImagesCarousel({ scoutReports, loading }) {

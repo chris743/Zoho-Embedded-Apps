@@ -6,7 +6,7 @@ import {
 } from "@mui/material";
 import { commonStyles } from "../../../utils/theme";
 import { KV } from "../KV";
-import { formatRate } from "../utils/datautils";
+import { formatRate } from "../../../utils/dataUtils";
 
 /**
  * Resource allocation section showing contractor and rate information

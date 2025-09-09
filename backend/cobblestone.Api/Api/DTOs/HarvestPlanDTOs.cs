@@ -41,6 +41,24 @@ public record HarvestPlanUpdateDto(
     DateTime? date,
     int? bins
 );
+public record BlockDto(
+    string id,
+    string name,
+    string blocktype,
+    string growerName,
+    string growerID,
+    decimal acres,
+    string? district,
+    string? cropyeardescr,
+    decimal latitude,
+    decimal longitude
+);
+
+public record CommodityDto(
+    string invoiceCommodity,
+    string commodity
+);
+
 public record HarvestPlanDto(
     Guid id,
     string grower_block_source_database,
@@ -57,5 +75,7 @@ public record HarvestPlanDto(
     string? deliver_to,
     string? packed_by,
     DateTime? date,
-    int?   bins
+    int?   bins,
+    BlockDto? block,
+    CommodityDto? commodity
 );

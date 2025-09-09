@@ -6,6 +6,8 @@ import { ZohoAuthWrapper } from "./components/ZohoAuthWrapper";
 import { AppLayout } from "./components/AppLayout";
 import HarvestContractorsPage from "./pages/HarvestContractorsPage";
 import HarvestPlannerPage from "./pages/HarvestPlannerPage";
+import ProcessPlansPage from "./pages/ProcessPlansPage";
+import UserManagementPage from "./pages/UserManagementPage";
 
 
 export default function App() {
@@ -19,6 +21,8 @@ export default function App() {
                             <Route path="/" element={<HarvestPlannerPage />} />
                             <Route path="/harvestcontractors" element={<HarvestContractorsPage />} />
                             <Route path="/harvestplans" element={<HarvestPlannerPage />} />
+                            <Route path="/processplans" element={<ProcessPlansPage />} />
+                            <Route path="/users" element={<UserManagementPage />} />
                         </Routes>
                     </AppLayout>
                 </Router>

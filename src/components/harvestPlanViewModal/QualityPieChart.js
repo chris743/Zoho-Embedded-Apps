@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import {
   Box, Typography, Card
 } from "@mui/material";
-import formatDate from "./utils/dateutils";
+import { formatDate } from "../../utils/dateUtils";
 
 /**
  * Quality pie chart component showing Est Fancy % and Est Choice %

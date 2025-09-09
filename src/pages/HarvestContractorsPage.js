@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Box, Container, Paper, Typography, Snackbar } from "@mui/material";
-import ContractorsTable from "../components/ContractorsTable";
-import ContractorFormDialog from "../components/ContractorFormDialog";
-import ConfirmDialog from "../components/ConfirmDialog";
+import ContractorsTable from "../components/tables/ContractorsTable";
+import ContractorFormDialog from "../components/dialogs/ContractorFormDialog";
+import ConfirmDialog from "../components/dialogs/ConfirmDialog";
 import { useApiConfig } from "../hooks/useApiConfig";
 import { ContractorsApi } from "../api/contractors";
 

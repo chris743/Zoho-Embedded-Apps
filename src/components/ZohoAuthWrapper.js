@@ -1,16 +1,30 @@
 import React from 'react';
 import { Box, Typography, CircularProgress, Alert, Button } from '@mui/material';
 import { useZohoAuth } from '../utils/zohoAuth';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
+import { LoginForm } from './LoginForm';
 
 /**
- * Zoho Authentication Wrapper Component
- * Protects the app and only allows access with valid Zoho tokens
+ * Combined Authentication Wrapper Component
+ * Handles both Zoho CRM authentication and username/password authentication
  */
-export function ZohoAuthWrapper({ children }) {
-    const { isAuthenticated, user, loading, isZohoEmbedded } = useZohoAuth();
+function AuthWrapper({ children }) {
+    const { isAuthenticated: zohoAuth, user: zohoUser, loading: zohoLoading } = useZohoAuth();
+    const { isAuthenticated: userAuth, loading: userLoading, user: authUser } = useAuth();
+    
+    // Debug authentication states
+    console.log('🔍 AuthWrapper Debug:', {
+        zohoAuth,
+        userAuth,
+        zohoLoading,
+        userLoading,
+        hasZohoUser: !!zohoUser,
+        hasAuthUser: !!authUser,
+        willShowLogin: !zohoAuth && !userAuth && !zohoLoading && !userLoading
+    });
 
     // Show loading spinner while checking authentication
-    if (loading) {
+    if (zohoLoading || userLoading) {
         return (
             <Box 
                 sx={{ 
@@ -24,77 +38,63 @@ export function ZohoAuthWrapper({ children }) {
             >
                 <CircularProgress size={60} />
                 <Typography variant="h6" color="text.secondary">
-                    Authenticating with Zoho CRM...
+                    {zohoLoading ? 'Checking session key...' : 'Checking authentication...'}
                 </Typography>
             </Box>
         );
     }
 
-    // Show error if not authenticated
-    if (!isAuthenticated) {
+    // If we have any authentication, proceed with the app
+    if (zohoAuth || userAuth) {
         return (
-            <Box 
-                sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    minHeight: '100vh',
-                    gap: 3,
-                    p: 3
-                }}
-            >
-                <Alert severity="error" sx={{ maxWidth: 600, width: '100%' }}>
-                    <Typography variant="h6" gutterBottom>
-                        Authentication Required
-                    </Typography>
-                    <Typography variant="body1" paragraph>
-                        This application requires authentication through Zoho CRM. 
-                        Please access this application through your Zoho CRM dashboard.
-                    </Typography>
-                    {!isZohoEmbedded && (
-                        <Typography variant="body2" color="text.secondary">
-                            If you're trying to access this directly, please ensure you have the proper 
-                            Zoho CRM access token in the URL parameters.
+            <Box>
+                {/* Optional: Show user info banner */}
+                {zohoUser && (
+                    <Box 
+                        sx={{ 
+                            bgcolor: 'success.light', 
+                            color: 'success.contrastText',
+                            p: 1, 
+                            textAlign: 'center',
+                            fontSize: '0.875rem'
+                        }}
+                    >
+                        <Typography variant="body2">
+                            Welcome, {zohoUser.full_name || zohoUser.email} | 
+                            Session Key Authentication Active
                         </Typography>
-                    )}
-                </Alert>
-                
-                <Button 
-                    variant="contained" 
-                    onClick={() => window.location.reload()}
-                    sx={{ mt: 2 }}
-                >
-                    Retry Authentication
-                </Button>
+                    </Box>
+                )}
+                {authUser && !zohoUser && (
+                    <Box 
+                        sx={{ 
+                            bgcolor: 'info.light', 
+                            color: 'info.contrastText',
+                            p: 1, 
+                            textAlign: 'center',
+                            fontSize: '0.875rem'
+                        }}
+                    >
+                        <Typography variant="body2">
+                            Welcome, {authUser.username || authUser.email} | 
+                            Backend Authentication Active
+                        </Typography>
+                    </Box>
+                )}
+                {children}
             </Box>
         );
     }
 
-    // Show success message and user info
+    // Show login form for external users
+    return <LoginForm />;
+}
+
+export function ZohoAuthWrapper({ children }) {
     return (
-        <Box>
-            {/* Optional: Show user info banner */}
-            {user && (
-                <Box 
-                    sx={{ 
-                        bgcolor: 'success.light', 
-                        color: 'success.contrastText',
-                        p: 1, 
-                        textAlign: 'center',
-                        fontSize: '0.875rem'
-                    }}
-                >
-                    <Typography variant="body2">
-                        Welcome, {user.full_name || user.email} | 
-                        Zoho CRM Integration Active
-                    </Typography>
-                </Box>
-            )}
-            
-            {/* Render the main application */}
-            {children}
-        </Box>
+        <AuthProvider>
+            <AuthWrapper>{children}</AuthWrapper>
+        </AuthProvider>
     );
 }
 

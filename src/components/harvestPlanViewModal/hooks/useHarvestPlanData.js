@@ -1,24 +1,11 @@
 import { useMemo } from "react";
-import { buildCommodityMap, getCommodityIdxFromBlockOrPlan } from "../../utils/commodities";
-import { buildPoolMap, getPoolIdxFromPlan } from "../../utils/pools";
+import { buildPoolMap, getPoolIdxFromPlan } from "../../../utils/dataUtils";
 
 /**
  * Custom hook for processing harvest plan data and building lookup maps
  */
-export function useHarvestPlanData({ plan, blocks, contractors, commodities, pools }) {
+export function useHarvestPlanData({ plan, contractors, pools }) {
   // Build lookup maps
-  const blockByKey = useMemo(() => {
-    const m = new Map();
-    for (const b of blocks) {
-      const src = b.source_database ?? b.sourceDatabase ?? "";
-      const idx = b.GABLOCKIDX ?? b.gablockidx ?? b.id;
-      if (src && idx != null) {
-        m.set(`${src}:${idx}`, b);
-      }
-    }
-    return m;
-  }, [blocks]);
-
   const contractorById = useMemo(() => {
     const m = new Map();
     for (const c of contractors) {
@@ -30,23 +17,14 @@ export function useHarvestPlanData({ plan, blocks, contractors, commodities, poo
     return m;
   }, [contractors]);
 
-  const commodityByIdx = useMemo(() => {
-    if (!Array.isArray(commodities)) return new Map();
-    return buildCommodityMap(commodities, false);
-  }, [commodities]);
-
   const poolByIdx = useMemo(() => {
     if (!Array.isArray(pools)) return new Map();
     return buildPoolMap(pools, false);
   }, [pools]);
 
-  // Resolve associated entities
-  const blockKey = useMemo(() => {
-    if (!plan?.grower_block_source_database || plan?.grower_block_id == null) return null;
-    return `${plan.grower_block_source_database}:${plan.grower_block_id}`;
-  }, [plan]);
-
-  const block = blockKey ? blockByKey.get(blockKey) : null;
+  // Resolve associated entities using new data structure
+  const block = plan?.block || null;
+  const commodity = plan?.commodity || null;
 
   const labor = useMemo(() => {
     if (!plan?.contractor_id) return null;
@@ -69,20 +47,20 @@ export function useHarvestPlanData({ plan, blocks, contractors, commodities, poo
     return poolByIdx.get(String(pool_idx)) || null;
   }, [pool_idx, poolByIdx]);
 
-  const commodity_idx = useMemo(() => getCommodityIdxFromBlockOrPlan(block, plan), [block, plan]);
+  // Use commodity data from the new structure
   const commodityName = useMemo(() => {
-    if (!commodity_idx) return "";
-    return commodityByIdx.get(String(commodity_idx)) || "";
-  }, [commodity_idx, commodityByIdx]);
+    if (!commodity) return "";
+    return commodity.commodity || commodity.invoiceCommodity || "";
+  }, [commodity]);
 
   return {
     block,
+    commodity,
     labor,
     forklift,
     hauler,
     poolName,
     commodityName,
-    commodity_idx,
-    blockKey
+    pool_idx
   };
 }

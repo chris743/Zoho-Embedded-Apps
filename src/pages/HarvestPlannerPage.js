@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { HarvestPlansTable } from "../components/HarvestPlansTable";
+import { HarvestPlansTable } from "../components/tables/HarvestPlansTable";
 import { Box, Button, Container, Stack, TextField, Snackbar, ToggleButtonGroup, ToggleButton, Paper, Typography, Divider } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
@@ -8,24 +8,48 @@ import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import { HarvestPlansApi } from "../api/harvestPlans";
 import { makeApi } from "../api/client"; // reuse the axios factory from earlier canvas
-import PlannerDialog from "../components/PlannerDialog";
+import PlannerDialog from "../components/dialogs/PlannerDialog";
 import { BlocksApi } from "../api/blocks";
 import { PoolsApi } from "../api/pools"
 import { ContractorsApi } from "../api/contractors";
 import { CommoditiesApi } from "../api/commodities";
 import { ScoutReportsApi } from "../api/scoutReports";
-import { WeeklyPlannerBoard } from "../components/WeeklyPlannerComponents/WeeklyPlannerBoard";
+import { WeeklyPlannerBoard } from "../components/planners/WeeklyPlannerComponents/WeeklyPlannerBoard";
 import { WeekPicker } from "../components/WeekPicker";
 import { DateRangePicker } from "../components/DateRangePicker";
 import ViewPlanDialog from "../components/harvestPlanViewModal/HarvestPlanViewModal";
 import { initializeCommodityColors } from "../utils/theme";
+import { useAuth } from "../contexts/AuthContext";
+import { useZohoAuth } from "../utils/zohoAuth";
 
 
 export default function HarvestPlannerPage() {
     const [weekStart, setWeekStart] = useState(new Date());
     const [apiBase, setApiBase] = useState(() => localStorage.getItem("apiBase") || "https://api.cobblestonecloud.com/api/v1");
     const [jwt, setJwt] = useState(() => localStorage.getItem("jwt") || "");
-    const api = useMemo(() => makeApi(apiBase, jwt), [apiBase, jwt]);
+    
+    // Get authentication state
+    const { isAuthenticated: userAuth, loading: userLoading, token: userToken } = useAuth();
+    const { isAuthenticated: zohoAuth, loading: zohoLoading, token: zohoToken } = useZohoAuth();
+    
+    // Determine which token to use
+    const authToken = zohoToken || userToken || jwt;
+    const isAuthenticated = zohoAuth || userAuth;
+    const authLoading = zohoLoading || userLoading;
+    
+    // Debug token information
+    console.log('🔍 Token Debug Info:', {
+        zohoToken: zohoToken ? `${zohoToken.substring(0, 20)}...` : 'null',
+        userToken: userToken ? `${userToken.substring(0, 20)}...` : 'null',
+        jwt: jwt ? `${jwt.substring(0, 20)}...` : 'null',
+        authToken: authToken ? `${authToken.substring(0, 20)}...` : 'null',
+        zohoAuth,
+        userAuth,
+        isAuthenticated,
+        authLoading
+    });
+    
+    const api = useMemo(() => makeApi(apiBase, authToken), [apiBase, authToken]);
     const svc = useMemo(() => HarvestPlansApi(api), [api]);
     const blocksSvc = useMemo(() => BlocksApi(api), [api]);
     const poolsSvc = useMemo(() => PoolsApi(api), [api]);
@@ -107,7 +131,19 @@ export default function HarvestPlannerPage() {
         setDateFrom(startDate);
         setDateTo(endDate);
     };
-    useEffect(() => { load(); loadBlocks(); loadPools(); loadContractors(); loadCommodities();}, []);
+    // Only load data when authenticated and not loading
+    useEffect(() => { 
+        if (isAuthenticated && !authLoading) {
+            console.log('🔍 Loading data - authenticated:', isAuthenticated, 'loading:', authLoading);
+            load(); 
+            loadBlocks(); 
+            loadPools(); 
+            loadContractors(); 
+            loadCommodities();
+        } else {
+            console.log('⏳ Waiting for authentication - authenticated:', isAuthenticated, 'loading:', authLoading);
+        }
+    }, [isAuthenticated, authLoading]);
 
 // client-side filter by date range (inclusive)
 const filtered = rows.filter(r => {
@@ -126,7 +162,33 @@ const filtered = rows.filter(r => {
     return true;
 }).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
-return (
+    // Show loading state while waiting for authentication
+    if (authLoading) {
+        return (
+            <Container maxWidth="xl" sx={{ py: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+                    <Typography variant="h6" color="text.secondary">
+                        Authenticating...
+                    </Typography>
+                </Box>
+            </Container>
+        );
+    }
+
+    // Show message if not authenticated
+    if (!isAuthenticated) {
+        return (
+            <Container maxWidth="xl" sx={{ py: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+                    <Typography variant="h6" color="error">
+                        Authentication required. Please log in.
+                    </Typography>
+                </Box>
+            </Container>
+        );
+    }
+
+    return (
     <Container maxWidth={false} sx={{ py: 2, px: 3 }}>
         {/* Header Section */}
         <Paper elevation={0} sx={{ p: 3, mb: 2, bgcolor: 'background.paper', border: '1px solid #E8EBF0' }}>

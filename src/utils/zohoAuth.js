@@ -118,7 +118,7 @@ export function useZohoAuth() {
                 console.log('🔍 Session key found:', sessionKey ? 'Yes' : 'No', sessionKey ? `(${sessionKey.substring(0, 10)}...)` : '');
                 
                 if (!sessionKey) {
-                    console.log('❌ No session key found');
+                    console.log('❌ No session key found - will fall back to JWT auth');
                     setLoading(false);
                     return;
                 }
@@ -128,7 +128,7 @@ export function useZohoAuth() {
                 console.log('🔍 Session key validation result:', isValid);
                 
                 if (!isValid) {
-                    console.log('❌ Session key validation failed');
+                    console.log('❌ Session key validation failed - will fall back to JWT auth');
                     clearSessionKey();
                     setLoading(false);
                     return;
@@ -141,9 +141,10 @@ export function useZohoAuth() {
                 setToken(sessionKey);
                 setIsAuthenticated(true);
                 setUser(userInfo);
-                console.log('✅ Authentication successful');
+                console.log('✅ Session key authentication successful');
             } catch (error) {
-                console.error('❌ Error during authentication initialization:', error);
+                console.error('❌ Error during session key authentication:', error);
+                console.log('🔄 Will fall back to JWT authentication');
                 clearSessionKey();
             } finally {
                 setLoading(false);

@@ -6,7 +6,7 @@ import {
 } from "@mui/material";
 import { commonStyles } from "../../../utils/theme";
 import { KV } from "../KV";
-import formatDate from "../utils/dateutils";
+import { formatDate } from "../../../utils/dateUtils";
 
 /**
  * Plan overview section showing basic plan information

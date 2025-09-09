@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import formatDate from "../utils/dateutils";
+import { formatDate } from "../../../utils/dateUtils";
 
 /**
  * Modal header with title and action buttons
