@@ -2,9 +2,11 @@ import { startOfWeek, sevenDays, toYMD } from "../../../utils/dateUtils";
 import { createBlockMap, createContractorMap, createCommodityMap, buildBuckets } from "../../../utils/dataUtils";
 
 import { WeekGrid } from "./WeekGrid";
+import { DayColumn } from "./DayColumn";
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { Box as MuiBox } from "@mui/material";
+import { Box as MuiBox, useMediaQuery, useTheme, Stack, Typography, Box } from "@mui/material";
+import { useViewMode } from "../../../contexts/ViewModeContext";
 
 export function WeeklyPlannerBoard({
   plans = [],
@@ -17,6 +19,12 @@ export function WeeklyPlannerBoard({
   weekStart,
   onWeekChange,
 }) {
+  const theme = useTheme();
+  const actualIsMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { viewMode } = useViewMode();
+  
+  // Determine if we should use mobile layout
+  const isMobile = viewMode === 'mobile' || (viewMode === 'auto' && actualIsMobile);
   // Memoized week calculations
   const start = useMemo(() => startOfWeek(weekStart || new Date()), [weekStart]);
   const days = useMemo(() => sevenDays(start), [start]);
@@ -103,14 +111,49 @@ export function WeeklyPlannerBoard({
       minHeight: '100vh',
       p: 0
     }}>
-
-      <WeekGrid 
-        days={days}
-        buckets={buckets}
-        onEdit={handleEdit}
-        onView={handleView}
-        onDragEnd={handleDragEnd}
-      />
+      {isMobile ? (
+        // Mobile: Vertical stack of day columns
+        <Box sx={{ 
+          p: 2,
+          bgcolor: 'grey.50',
+          borderRadius: 2,
+          border: '2px solid',
+          borderColor: 'primary.200'
+        }}>
+          <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', color: 'primary.main' }}>
+            📱 Mobile View - Weekly Harvest Plans
+          </Typography>
+          <Stack direction="column" spacing={2} sx={{ width: '100%' }}>
+            {days.map((day) => {
+              const ymd = toYMD(day);
+              const cards = buckets[ymd] || [];
+              const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+              
+              return (
+                <DayColumn 
+                  key={ymd}
+                  ymd={ymd}
+                  dateObj={day}
+                  cards={cards}
+                  onEdit={handleEdit}
+                  onView={handleView}
+                  isWeekend={isWeekend}
+                  isMobile={true}
+                />
+              );
+            })}
+          </Stack>
+        </Box>
+      ) : (
+        // Desktop: Grid layout
+        <WeekGrid 
+          days={days}
+          buckets={buckets}
+          onEdit={handleEdit}
+          onView={handleView}
+          onDragEnd={handleDragEnd}
+        />
+      )}
     </MuiBox>
   );
 }

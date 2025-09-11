@@ -3,17 +3,18 @@ import { Paper } from "@mui/material";
 import { DayHeader } from "./DayHeader";
 import { DropZone } from "./DropZone";
 
-export const DayColumn = memo(({ ymd, dateObj, cards, onEdit, onView, isWeekend }) => (
+export const DayColumn = memo(({ ymd, dateObj, cards, onEdit, onView, isWeekend, isMobile = false }) => (
   <Paper
-    elevation={0}
+    elevation={isMobile ? 3 : 0}
     sx={{
       height: 'fit-content',
-      minHeight: 400,
-      borderRadius: 2,
-      border: '1px solid',
-      borderColor: 'grey.200',
-      bgcolor: isWeekend ? 'grey.25' : 'white',
-      overflow: 'hidden'
+      minHeight: isMobile ? 200 : 400,
+      borderRadius: isMobile ? 3 : 2,
+      border: isMobile ? '2px solid' : '1px solid',
+      borderColor: isMobile ? 'primary.300' : 'grey.200',
+      bgcolor: isMobile ? 'primary.50' : (isWeekend ? 'grey.25' : 'white'),
+      overflow: 'hidden',
+      boxShadow: isMobile ? 2 : 'none'
     }}
   >
     <DayHeader dateObj={dateObj} isWeekend={isWeekend} />
@@ -23,7 +24,8 @@ export const DayColumn = memo(({ ymd, dateObj, cards, onEdit, onView, isWeekend 
   prev.ymd === next.ymd && 
   prev.cards === next.cards && 
   prev.dateObj.getTime() === next.dateObj.getTime() &&
-  prev.isWeekend === next.isWeekend
+  prev.isWeekend === next.isWeekend &&
+  prev.isMobile === next.isMobile
 );
 
 DayColumn.displayName = 'DayColumn';
