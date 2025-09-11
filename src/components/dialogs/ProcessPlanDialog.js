@@ -17,7 +17,9 @@ import {
     Grid,
     Paper,
     Divider,
-    Chip
+    Chip,
+    useMediaQuery,
+    useTheme
 } from '@mui/material';
 import { ProcessPlansApi } from '../../api/processPlans';
 import { useAuth } from '../../contexts/AuthContext';
@@ -48,6 +50,8 @@ export function ProcessPlanDialog({
     onError 
 }) {
     const { apiClient } = useAuth();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [formData, setFormData] = useState({
         block: null, // { source_database: string, id: number } | null
         bins: 0,
@@ -244,10 +248,15 @@ export function ProcessPlanDialog({
         <Dialog 
             open={open} 
             onClose={handleClose}
-            maxWidth="lg" 
+            maxWidth={isMobile ? "sm" : "lg"} 
             fullWidth
+            fullScreen={isMobile}
             PaperProps={{
-                sx: { borderRadius: 3, minHeight: '600px' }
+                sx: { 
+                    borderRadius: isMobile ? 0 : 3, 
+                    minHeight: isMobile ? '100vh' : '600px',
+                    margin: isMobile ? 0 : 'auto'
+                }
             }}
         >
             <DialogTitle sx={{ pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
@@ -336,7 +345,7 @@ export function ProcessPlanDialog({
                             )}
                         </Paper>
 
-                        <Grid container spacing={2}>
+                        <Grid container spacing={isMobile ? 1 : 2}>
                             {/* Essential Fields - Row 1 */}
                             <Grid item xs={12} sm={6}>
                                 <TextField
@@ -447,9 +456,17 @@ export function ProcessPlanDialog({
                     </Stack>
                 </DialogContent>
                 
-                <DialogActions sx={{ p: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider', gap: 2, justifyContent: 'space-between' }}>
+                <DialogActions sx={{ 
+                    p: isMobile ? 2 : 3, 
+                    pt: 2, 
+                    borderTop: '1px solid', 
+                    borderColor: 'divider', 
+                    gap: 2, 
+                    justifyContent: 'space-between',
+                    flexDirection: isMobile ? 'column' : 'row'
+                }}>
                     {/* Left side - Delete button (only for edit mode) */}
-                    <Box>
+                    <Box sx={{ order: isMobile ? 3 : 1 }}>
                         {isEdit && (
                             <Button 
                                 onClick={handleDelete} 
@@ -457,12 +474,13 @@ export function ProcessPlanDialog({
                                 variant="outlined"
                                 color="error"
                                 startIcon={<DeleteIcon />}
+                                fullWidth={isMobile}
                                 sx={{ 
                                     textTransform: 'none', 
                                     fontWeight: 500,
                                     borderRadius: 2,
                                     px: 3,
-                                    minWidth: 120
+                                    minWidth: isMobile ? 'auto' : 120
                                 }}
                             >
                                 Delete
@@ -471,17 +489,23 @@ export function ProcessPlanDialog({
                     </Box>
 
                     {/* Right side - Cancel and Save buttons */}
-                    <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Box sx={{ 
+                        display: 'flex', 
+                        gap: 2,
+                        order: isMobile ? 2 : 2,
+                        flexDirection: isMobile ? 'column' : 'row'
+                    }}>
                         <Button 
                             onClick={handleClose} 
                             disabled={loading}
                             variant="outlined"
+                            fullWidth={isMobile}
                             sx={{ 
                                 textTransform: 'none', 
                                 fontWeight: 500,
                                 borderRadius: 2,
                                 px: 3,
-                                minWidth: 100
+                                minWidth: isMobile ? 'auto' : 100
                             }}
                         >
                             Cancel
@@ -490,12 +514,13 @@ export function ProcessPlanDialog({
                             type="submit" 
                             variant="contained" 
                             disabled={loading}
+                            fullWidth={isMobile}
                             sx={{ 
                                 textTransform: 'none', 
                                 fontWeight: 600,
                                 borderRadius: 2,
                                 px: 4,
-                                minWidth: 180,
+                                minWidth: isMobile ? 'auto' : 180,
                                 boxShadow: 2,
                                 '&:hover': {
                                     boxShadow: 4

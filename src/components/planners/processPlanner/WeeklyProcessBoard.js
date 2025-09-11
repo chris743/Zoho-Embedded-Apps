@@ -6,7 +6,9 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions
+    DialogActions,
+    useMediaQuery,
+    useTheme
 } from '@mui/material';
 import {
     PlayArrow as StartIcon,
@@ -34,6 +36,8 @@ export function WeeklyProcessBoard({
     weekStart
 }) {
     const { apiClient } = useAuth();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     
     // Helper functions for week calculations (Sunday start)
     const startOfWeek = useCallback((date) => {
@@ -396,33 +400,65 @@ export function WeeklyProcessBoard({
     };
 
     return (
-        <Box sx={{ p: 2, width: '100%', overflow: 'hidden' }}>
+        <Box sx={{ p: isMobile ? 1 : 2, width: '100%', overflow: 'hidden' }}>
             <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                <Stack direction="row" spacing={2} sx={{ pb: 2, width: '100%' }}>
-                    {dayKeys.map(day => {
-                        const dayDate = new Date(day);
-                        // Offset the display date by +1 day to match actual associated dates
-                        const displayDate = addDays(dayDate, 1);
-                        const isWeekend = displayDate.getDay() === 0 || displayDate.getDay() === 6;
-                        
-                        return (
-                                        <DayColumn
-                                            key={day}
-                                            day={day}
-                                            dayDate={displayDate}
-                                            plans={buckets[day] || []}
-                                            blockMap={blockMap}
-                                            poolMap={poolMap}
-                                            contractorMap={contractorMap}
-                                            commodityMap={commodityMap}
-                                            onEdit={onEdit}
-                                            onMenuOpen={handleMenuOpen}
-                                            isWeekend={isWeekend}
-                                            onBringFromHarvestPlans={(displayDate) => handleBringFromHarvestPlans(displayDate, day)}
-                                        />
-                        );
-                    })}
-                </Stack>
+                {isMobile ? (
+                    // Mobile: Vertical stack of day columns
+                    <Stack direction="column" spacing={1} sx={{ pb: 2, width: '100%' }}>
+                        {dayKeys.map(day => {
+                            const dayDate = new Date(day);
+                            // Offset the display date by +1 day to match actual associated dates
+                            const displayDate = addDays(dayDate, 1);
+                            const isWeekend = displayDate.getDay() === 0 || displayDate.getDay() === 6;
+                            
+                            return (
+                                <DayColumn
+                                    key={day}
+                                    day={day}
+                                    dayDate={displayDate}
+                                    plans={buckets[day] || []}
+                                    blockMap={blockMap}
+                                    poolMap={poolMap}
+                                    contractorMap={contractorMap}
+                                    commodityMap={commodityMap}
+                                    onEdit={onEdit}
+                                    onMenuOpen={handleMenuOpen}
+                                    isWeekend={isWeekend}
+                                    onBringFromHarvestPlans={(displayDate) => handleBringFromHarvestPlans(displayDate, day)}
+                                    isMobile={isMobile}
+                                />
+                            );
+                        })}
+                    </Stack>
+                ) : (
+                    // Desktop: Horizontal row of day columns
+                    <Stack direction="row" spacing={2} sx={{ pb: 2, width: '100%' }}>
+                        {dayKeys.map(day => {
+                            const dayDate = new Date(day);
+                            // Offset the display date by +1 day to match actual associated dates
+                            const displayDate = addDays(dayDate, 1);
+                            const isWeekend = displayDate.getDay() === 0 || displayDate.getDay() === 6;
+                            
+                            return (
+                                <DayColumn
+                                    key={day}
+                                    day={day}
+                                    dayDate={displayDate}
+                                    plans={buckets[day] || []}
+                                    blockMap={blockMap}
+                                    poolMap={poolMap}
+                                    contractorMap={contractorMap}
+                                    commodityMap={commodityMap}
+                                    onEdit={onEdit}
+                                    onMenuOpen={handleMenuOpen}
+                                    isWeekend={isWeekend}
+                                    onBringFromHarvestPlans={(displayDate) => handleBringFromHarvestPlans(displayDate, day)}
+                                    isMobile={isMobile}
+                                />
+                            );
+                        })}
+                    </Stack>
+                )}
             </DragDropContext>
 
             {/* Context Menu */}

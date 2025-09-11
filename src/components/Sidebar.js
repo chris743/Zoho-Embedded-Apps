@@ -71,8 +71,8 @@ const menuItems = [
     }
 ];
 
-export function Sidebar() {
-    const [collapsed, setCollapsed] = useState(true);
+export function Sidebar({ mobileOpen, onMobileToggle, isMobile }) {
+    const [collapsed, setCollapsed] = useState(!isMobile); // Start expanded on mobile
     const [expandedItems, setExpandedItems] = useState({});
     const navigate = useNavigate();
     const location = useLocation();
@@ -91,10 +91,14 @@ export function Sidebar() {
     };
 
     const handleToggleCollapse = () => {
-        setCollapsed(!collapsed);
-        // Reset expanded items when collapsing
-        if (!collapsed) {
-            setExpandedItems({});
+        if (isMobile) {
+            onMobileToggle();
+        } else {
+            setCollapsed(!collapsed);
+            // Reset expanded items when collapsing
+            if (!collapsed) {
+                setExpandedItems({});
+            }
         }
     };
 
@@ -141,7 +145,7 @@ export function Sidebar() {
                         onClick={() => handleItemClick(item)}
                         sx={{
                             minHeight: 48,
-                            justifyContent: collapsed ? 'center' : 'initial',
+                            justifyContent: (collapsed || isMobile) ? 'center' : 'initial',
                             px: 2.5,
                             py: 1.5,
                             borderRadius: 1,
@@ -159,14 +163,14 @@ export function Sidebar() {
                         <ListItemIcon
                             sx={{
                                 minWidth: 0,
-                                mr: collapsed ? 0 : 3,
+                                mr: (collapsed || isMobile) ? 0 : 3,
                                 justifyContent: 'center',
                                 color: active ? theme.palette.primary.main : theme.palette.text.secondary,
                             }}
                         >
                             <item.icon />
                         </ListItemIcon>
-                        {!collapsed && (
+                        {!(collapsed || isMobile) && (
                             <>
                                 <ListItemText 
                                     primary={item.label} 
@@ -183,7 +187,7 @@ export function Sidebar() {
                     </ListItemButton>
                 </ListItem>
 
-                {!collapsed && hasChildren && (
+                {!(collapsed || isMobile) && hasChildren && (
                     <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                         <List component="div" disablePadding>
                             {item.children.filter(child => hasRole(child.requiresRole)).map((child) => (
@@ -227,8 +231,8 @@ export function Sidebar() {
 
     return (
         <>
-            {/* Toggle button when sidebar is collapsed */}
-            {collapsed && (
+            {/* Toggle button when sidebar is collapsed or on mobile */}
+            {(collapsed || isMobile) && (
                 <IconButton
                     onClick={handleToggleCollapse}
                     sx={{
@@ -249,24 +253,29 @@ export function Sidebar() {
             )}
 
             <Drawer
-                variant="permanent"
-                open={!collapsed}
+                variant={isMobile ? "temporary" : "permanent"}
+                open={isMobile ? mobileOpen : !collapsed}
+                onClose={isMobile ? onMobileToggle : undefined}
+                ModalProps={{
+                    keepMounted: true, // Better open performance on mobile
+                }}
                 sx={{
-                    width: collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH,
+                    width: isMobile ? DRAWER_WIDTH : (collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH),
                     flexShrink: 0,
                     whiteSpace: 'nowrap',
                     boxSizing: 'border-box',
                     '& .MuiDrawer-paper': {
-                        width: collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH,
-                        transition: theme.transitions.create('width', {
+                        width: isMobile ? DRAWER_WIDTH : (collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH),
+                        transition: isMobile ? 'none' : theme.transitions.create('width', {
                             easing: theme.transitions.easing.sharp,
                             duration: theme.transitions.duration.enteringScreen,
                         }),
                         overflowX: 'hidden',
                         backgroundColor: theme.palette.background.paper,
-                        borderRight: `1px solid ${theme.palette.divider}`,
+                        borderRight: isMobile ? 'none' : `1px solid ${theme.palette.divider}`,
                         display: 'flex',
                         flexDirection: 'column',
+                        boxShadow: isMobile ? theme.shadows[16] : 'none',
                     },
                 }}
             >
@@ -274,17 +283,17 @@ export function Sidebar() {
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: collapsed ? 'center' : 'space-between',
-                        p: collapsed ? 1 : 2,
+                        justifyContent: (collapsed || isMobile) ? 'center' : 'space-between',
+                        p: (collapsed || isMobile) ? 1 : 2,
                         minHeight: 64,
                     }}
                 >
-                    {!collapsed && (
+                    {!(collapsed || isMobile) && (
                         <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
                             Cobblestone
                         </Typography>
                     )}
-                    {!collapsed && (
+                    {!(collapsed || isMobile) && (
                         <IconButton 
                             onClick={handleToggleCollapse}
                             size="small"
@@ -305,7 +314,7 @@ export function Sidebar() {
                 </List>
 
                 {/* User Section */}
-                {!collapsed && (
+                {!(collapsed || isMobile) && (
                     <>
                         <Divider />
                         <Box sx={{ p: 2 }}>

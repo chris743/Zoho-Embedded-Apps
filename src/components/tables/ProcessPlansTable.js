@@ -14,18 +14,20 @@ import {
     IconButton,
     Tooltip,
     Button,
-    Stack,
     Menu,
     MenuItem,
     ListItemIcon,
-    ListItemText
+    ListItemText,
+    useMediaQuery,
+    useTheme,
+    Card,
+    CardContent,
+    Divider
 } from '@mui/material';
 import {
     Edit as EditIcon,
-    Visibility as ViewIcon,
     MoreVert as MoreVertIcon,
     PlayArrow as StartIcon,
-    Stop as StopIcon,
     CheckCircle as CompleteIcon,
     Cancel as CancelIcon,
     FileDownload as ExportIcon,
@@ -76,6 +78,8 @@ export function ProcessPlansTable({
     onError 
 }) {
     const { apiClient } = useAuth();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [search, setSearch] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedProcessPlan, setSelectedProcessPlan] = useState(null);
@@ -293,28 +297,47 @@ export function ProcessPlansTable({
     return (
         <Paper sx={{ width: "100%", overflow: "hidden" }}>
             <Box sx={{ p: 2 }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                <Box sx={{ 
+                    display: "flex", 
+                    justifyContent: "space-between", 
+                    alignItems: isMobile ? "flex-start" : "center", 
+                    mb: 2,
+                    flexDirection: isMobile ? "column" : "row",
+                    gap: isMobile ? 2 : 0
+                }}>
                     <Typography variant="h6">
                         Process Plans - {filteredData.length} Plans
                     </Typography>
-                    <Box sx={{ display: "flex", gap: 1 }}>
+                    <Box sx={{ 
+                        display: "flex", 
+                        gap: 1,
+                        flexDirection: isMobile ? "row" : "row",
+                        width: isMobile ? "100%" : "auto"
+                    }}>
                         <Button
                             variant="outlined"
                             size="small"
                             startIcon={<ExportIcon />}
                             onClick={exportToCSV}
-                            sx={{ textTransform: 'none' }}
+                            sx={{ 
+                                textTransform: 'none',
+                                flex: isMobile ? 1 : 'auto'
+                            }}
                         >
-                            Export CSV
+                            {isMobile ? 'CSV' : 'Export CSV'}
                         </Button>
                         <Button
                             variant="outlined"
                             size="small"
                             startIcon={<PdfIcon />}
                             onClick={exportToPDF}
-                            sx={{ textTransform: 'none', color: 'error.main' }}
+                            sx={{ 
+                                textTransform: 'none', 
+                                color: 'error.main',
+                                flex: isMobile ? 1 : 'auto'
+                            }}
                         >
-                            Print PDF
+                            {isMobile ? 'PDF' : 'Print PDF'}
                         </Button>
                     </Box>
                 </Box>
@@ -329,61 +352,34 @@ export function ProcessPlansTable({
                 />
             </Box>
 
-            <TableContainer sx={{ maxHeight: "calc(100vh - 400px)" }}>
-                <Table stickyHeader size="small">
-                    <TableHead>
-                        <TableRow>
-                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Block</TableCell>
-                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Bins</TableCell>
-                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Run Date</TableCell>
-                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Pick Date</TableCell>
-                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Location</TableCell>
-                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Pool</TableCell>
-                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Status</TableCell>
-                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Batch ID</TableCell>
-                            <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {groupedData.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={9} align="center">
-                                    <Typography color="text.secondary">
-                                        {search ? 'No process plans match the search criteria' : 'No process plans found'}
-                                    </Typography>
-                                </TableCell>
-                            </TableRow>
-                        ) : (
+            {isMobile ? (
+                // Mobile Card Layout
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {groupedData.length === 0 ? (
+                        <Box sx={{ textAlign: 'center', py: 4 }}>
+                            <Typography color="text.secondary">
+                                {search ? 'No process plans match the search criteria' : 'No process plans found'}
+                            </Typography>
+                        </Box>
+                    ) : (
                             groupedData.map((plan, index) => {
                                 if (plan.isTotal) {
                                     return (
-                                        <TableRow key={`total-${plan.status}`} sx={{ height: '32px' }}>
-                                            <TableCell 
-                                                colSpan={2}
-                                                sx={{ 
-                                                    fontWeight: 'bold',
-                                                    backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                                                    borderTop: '2px solid rgba(0, 0, 0, 0.1)'
-                                                }}
-                                            >
-                                                <Chip 
-                                                    label={`${plan.status.toUpperCase()} TOTAL`}
-                                                    size="small"
-                                                    color={STATUS_COLORS[plan.status]}
-                                                    variant="outlined"
-                                                />
-                                            </TableCell>
-                                            <TableCell 
-                                                colSpan={6}
-                                                sx={{ 
-                                                    fontWeight: 'bold',
-                                                    backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                                                    borderTop: '2px solid rgba(0, 0, 0, 0.1)'
-                                                }}
-                                            >
-                                                {plan.totalBins} bins across {plan.rowCount} plans
-                                            </TableCell>
-                                        </TableRow>
+                                        <Card key={`total-${plan.status}`} sx={{ bgcolor: 'grey.50', border: '2px solid', borderColor: 'grey.200' }}>
+                                            <CardContent sx={{ py: 1, px: 2 }}>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <Chip 
+                                                        label={`${plan.status.toUpperCase()} TOTAL`}
+                                                        size="small"
+                                                        color={STATUS_COLORS[plan.status]}
+                                                        variant="outlined"
+                                                    />
+                                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                        {plan.totalBins} bins across {plan.rowCount} plans
+                                                    </Typography>
+                                                </Box>
+                                            </CardContent>
+                                        </Card>
                                     );
                                 }
 
@@ -396,78 +392,248 @@ export function ProcessPlansTable({
                                 const textColor = commodity ? getContrastColor(commodityColor) : '#000';
 
                                 return (
-                                    <TableRow key={plan.id} hover sx={{ height: '36px' }}>
-                                        <TableCell sx={{ py: 0.5 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                {commodity && (
-                                                    <Chip
-                                                        label={commodity}
-                                                        size="small"
-                                                        sx={{
-                                                            height: '20px',
-                                                            fontSize: '0.7rem',
-                                                            backgroundColor: commodityColor,
-                                                            color: textColor
-                                                        }}
-                                                    />
+                                    <Card key={plan.id} sx={{ cursor: 'pointer', '&:hover': { boxShadow: 3 } }}>
+                                        <CardContent sx={{ p: 2 }}>
+                                            {/* Header with Block info and Actions */}
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                                                <Box sx={{ flex: 1 }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                                        {commodity && (
+                                                            <Chip
+                                                                label={commodity}
+                                                                size="small"
+                                                                sx={{
+                                                                    height: '20px',
+                                                                    fontSize: '0.7rem',
+                                                                    backgroundColor: commodityColor,
+                                                                    color: textColor
+                                                                }}
+                                                            />
+                                                        )}
+                                                        <Chip
+                                                            label={STATUS_LABELS[plan.run_status] || 'Pending'}
+                                                            size="small"
+                                                            color={STATUS_COLORS[plan.run_status] || 'default'}
+                                                            variant="outlined"
+                                                        />
+                                                    </Box>
+                                                    <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                                                        {plan.block?.name || 'Unknown Block'}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                                        {plan.block?.id || 'N/A'}
+                                                    </Typography>
+                                                </Box>
+                                                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                                    <Tooltip title="Edit Process Plan">
+                                                        <IconButton size="small" onClick={() => onEdit(plan)}>
+                                                            <EditIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="More Actions">
+                                                        <IconButton 
+                                                            size="small" 
+                                                            onClick={(e) => handleMenuOpen(e, plan)}
+                                                        >
+                                                            <MoreVertIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
+                                            </Box>
+
+                                            <Divider sx={{ my: 1 }} />
+
+                                            {/* Details Grid */}
+                                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                                                <Box>
+                                                    <Typography variant="caption" color="text.secondary">Bins</Typography>
+                                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                        {plan.bins || 0}
+                                                    </Typography>
+                                                </Box>
+                                                <Box>
+                                                    <Typography variant="caption" color="text.secondary">Pool</Typography>
+                                                    <Typography variant="body2">
+                                                        {pool?.name || '-'}
+                                                    </Typography>
+                                                </Box>
+                                                <Box>
+                                                    <Typography variant="caption" color="text.secondary">Run Date</Typography>
+                                                    <Typography variant="body2">
+                                                        {formatDate(plan.run_date)}
+                                                    </Typography>
+                                                </Box>
+                                                <Box>
+                                                    <Typography variant="caption" color="text.secondary">Pick Date</Typography>
+                                                    <Typography variant="body2">
+                                                        {formatDate(plan.pick_date)}
+                                                    </Typography>
+                                                </Box>
+                                                {plan.location && (
+                                                    <Box sx={{ gridColumn: '1 / -1' }}>
+                                                        <Typography variant="caption" color="text.secondary">Location</Typography>
+                                                        <Typography variant="body2">
+                                                            {plan.location}
+                                                        </Typography>
+                                                    </Box>
                                                 )}
-                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                    {plan.block?.name || 'Unknown Block'}
-                                                </Typography>
+                                                {plan.batch_id && (
+                                                    <Box sx={{ gridColumn: '1 / -1' }}>
+                                                        <Typography variant="caption" color="text.secondary">Batch ID</Typography>
+                                                        <Typography variant="body2">
+                                                            {plan.batch_id}
+                                                        </Typography>
+                                                    </Box>
+                                                )}
                                             </Box>
-                                        </TableCell>
-                                        <TableCell sx={{ py: 0.5 }}>
-                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                {plan.bins || 0}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell sx={{ py: 0.5 }}>
-                                            {formatDate(plan.run_date)}
-                                        </TableCell>
-                                        <TableCell sx={{ py: 0.5 }}>
-                                            {formatDate(plan.pick_date)}
-                                        </TableCell>
-                                        <TableCell sx={{ py: 0.5 }}>
-                                            {plan.location || '-'}
-                                        </TableCell>
-                                        <TableCell sx={{ py: 0.5 }}>
-                                            {pool?.name || '-'}
-                                        </TableCell>
-                                        <TableCell sx={{ py: 0.5 }}>
-                                            <Chip
-                                                label={STATUS_LABELS[plan.run_status] || 'Pending'}
-                                                size="small"
-                                                color={STATUS_COLORS[plan.run_status] || 'default'}
-                                                variant="outlined"
-                                            />
-                                        </TableCell>
-                                        <TableCell sx={{ py: 0.5 }}>
-                                            {plan.batch_id || '-'}
-                                        </TableCell>
-                                        <TableCell sx={{ py: 0.5 }}>
-                                            <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                                <Tooltip title="Edit Process Plan">
-                                                    <IconButton size="small" onClick={() => onEdit(plan)}>
-                                                        <EditIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="More Actions">
-                                                    <IconButton 
-                                                        size="small" 
-                                                        onClick={(e) => handleMenuOpen(e, plan)}
-                                                    >
-                                                        <MoreVertIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Box>
-                                        </TableCell>
-                                    </TableRow>
+                                        </CardContent>
+                                    </Card>
                                 );
                             })
                         )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                </Box>
+            ) : (
+                // Desktop Table Layout
+                <TableContainer sx={{ maxHeight: "calc(100vh - 400px)" }}>
+                    <Table stickyHeader size="small">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Block</TableCell>
+                                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Bins</TableCell>
+                                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Run Date</TableCell>
+                                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Pick Date</TableCell>
+                                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Location</TableCell>
+                                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Pool</TableCell>
+                                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Status</TableCell>
+                                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Batch ID</TableCell>
+                                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {groupedData.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={9} align="center">
+                                        <Typography color="text.secondary">
+                                            {search ? 'No process plans match the search criteria' : 'No process plans found'}
+                                        </Typography>
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                groupedData.map((plan, index) => {
+                                    if (plan.isTotal) {
+                                        return (
+                                            <TableRow key={`total-${plan.status}`} sx={{ height: '32px' }}>
+                                                <TableCell 
+                                                    colSpan={2}
+                                                    sx={{ 
+                                                        fontWeight: 'bold',
+                                                        backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                                                        borderTop: '2px solid rgba(0, 0, 0, 0.1)'
+                                                    }}
+                                                >
+                                                    <Chip 
+                                                        label={`${plan.status.toUpperCase()} TOTAL`}
+                                                        size="small"
+                                                        color={STATUS_COLORS[plan.status]}
+                                                        variant="outlined"
+                                                    />
+                                                </TableCell>
+                                                <TableCell 
+                                                    colSpan={6}
+                                                    sx={{ 
+                                                        fontWeight: 'bold',
+                                                        backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                                                        borderTop: '2px solid rgba(0, 0, 0, 0.1)'
+                                                    }}
+                                                >
+                                                    {plan.totalBins} bins across {plan.rowCount} plans
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    }
+
+                                    const pool = poolMap.get(plan.pool);
+                                    const contractor = contractorMap.get(plan.contractor);
+                                    
+                                    // Get commodity info from nested commodity object
+                                    const commodity = plan.commodity?.commodity || null;
+                                    const commodityColor = commodity ? getCommodityColor(commodity) : '#e0e0e0';
+                                    const textColor = commodity ? getContrastColor(commodityColor) : '#000';
+
+                                    return (
+                                        <TableRow key={plan.id} hover sx={{ height: '36px' }}>
+                                            <TableCell sx={{ py: 0.5 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    {commodity && (
+                                                        <Chip
+                                                            label={commodity}
+                                                            size="small"
+                                                            sx={{
+                                                                height: '20px',
+                                                                fontSize: '0.7rem',
+                                                                backgroundColor: commodityColor,
+                                                                color: textColor
+                                                            }}
+                                                        />
+                                                    )}
+                                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                        {plan.block?.name || 'Unknown Block'}
+                                                    </Typography>
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell sx={{ py: 0.5 }}>
+                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                    {plan.bins || 0}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell sx={{ py: 0.5 }}>
+                                                {formatDate(plan.run_date)}
+                                            </TableCell>
+                                            <TableCell sx={{ py: 0.5 }}>
+                                                {formatDate(plan.pick_date)}
+                                            </TableCell>
+                                            <TableCell sx={{ py: 0.5 }}>
+                                                {plan.location || '-'}
+                                            </TableCell>
+                                            <TableCell sx={{ py: 0.5 }}>
+                                                {pool?.name || '-'}
+                                            </TableCell>
+                                            <TableCell sx={{ py: 0.5 }}>
+                                                <Chip
+                                                    label={STATUS_LABELS[plan.run_status] || 'Pending'}
+                                                    size="small"
+                                                    color={STATUS_COLORS[plan.run_status] || 'default'}
+                                                    variant="outlined"
+                                                />
+                                            </TableCell>
+                                            <TableCell sx={{ py: 0.5 }}>
+                                                {plan.batch_id || '-'}
+                                            </TableCell>
+                                            <TableCell sx={{ py: 0.5 }}>
+                                                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                                    <Tooltip title="Edit Process Plan">
+                                                        <IconButton size="small" onClick={() => onEdit(plan)}>
+                                                            <EditIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="More Actions">
+                                                        <IconButton 
+                                                            size="small" 
+                                                            onClick={(e) => handleMenuOpen(e, plan)}
+                                                        >
+                                                            <MoreVertIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
+                            )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
 
             <Box sx={{ p: 2, borderTop: "1px solid rgba(224, 224, 224, 1)" }}>
                 <Typography variant="body2" color="text.secondary">

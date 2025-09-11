@@ -22,7 +22,8 @@ export function DayColumn({
     onEdit, 
     onMenuOpen, 
     isWeekend,
-    onBringFromHarvestPlans
+    onBringFromHarvestPlans,
+    isMobile = false
 }) {
     const isToday = toYMD(new Date()) === day;
     
@@ -49,14 +50,14 @@ export function DayColumn({
         <Paper
             elevation={0}
             sx={{
-                width: 'calc((100% - 96px) / 7)',
-                minWidth: 'calc((100% - 96px) / 7)',
-                maxWidth: 'calc((100% - 96px) / 7)',
+                width: isMobile ? '100%' : 'calc((100% - 96px) / 7)',
+                minWidth: isMobile ? '100%' : 'calc((100% - 96px) / 7)',
+                maxWidth: isMobile ? '100%' : 'calc((100% - 96px) / 7)',
                 height: 'fit-content',
-                minHeight: 400,
+                minHeight: isMobile ? 200 : 400,
                 borderRadius: 2,
                 border: '1px solid',
-                borderColor: 'grey.200',
+                borderColor: isToday ? 'primary.main' : 'grey.200',
                 bgcolor: isWeekend ? 'grey.25' : 'white',
                 overflow: 'hidden'
             }}
@@ -77,11 +78,11 @@ export function DayColumn({
                 px: 1
             }}>
                 <Typography 
-                    variant="subtitle1" 
+                    variant={isMobile ? "caption" : "subtitle1"}
                     sx={{ 
                         fontWeight: 600,
                         color: isToday ? 'primary.800' : 'grey.800',
-                        fontSize: '0.875rem',
+                        fontSize: isMobile ? '0.75rem' : '0.875rem',
                         letterSpacing: '0.025em',
                         py: 1,
                         flex: 1,
@@ -113,8 +114,8 @@ export function DayColumn({
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         sx={{
-                            minHeight: 300,
-                            p: 2,
+                            minHeight: isMobile ? 150 : 300,
+                            p: isMobile ? 1 : 2,
                             bgcolor: snapshot.isDraggingOver 
                                 ? 'primary.50' 
                                 : 'transparent',
@@ -139,6 +140,7 @@ export function DayColumn({
                                 commodityMap={commodityMap}
                                 onEdit={onEdit}
                                 onMenuOpen={onMenuOpen}
+                                isMobile={isMobile}
                             />
                         ))}
                         {plans.length === 0 && !snapshot.isDraggingOver && (

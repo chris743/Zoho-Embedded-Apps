@@ -21,7 +21,8 @@ export const ProcessPlanCard = React.memo(function ProcessPlanCard({
     contractorMap, 
     commodityMap, 
     onEdit, 
-    onMenuOpen 
+    onMenuOpen,
+    isMobile = false
 }) {
     // Use the nested block object from the process plan
     const block = plan.block;
@@ -78,7 +79,7 @@ export const ProcessPlanCard = React.memo(function ProcessPlanCard({
                         } : {}
                     }}
                 >
-                    <CardContent sx={{ p: 0.8, pb: 0.6 }}>
+                    <CardContent sx={{ p: isMobile ? 1 : 0.8, pb: isMobile ? 0.8 : 0.6 }}>
                         <Stack spacing={0.6}>
                             {/* Block ID, Name and Menu */}
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
