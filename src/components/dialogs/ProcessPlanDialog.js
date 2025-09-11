@@ -21,6 +21,7 @@ import {
     useMediaQuery,
     useTheme
 } from '@mui/material';
+import { useViewMode } from '../../contexts/ViewModeContext';
 import { ProcessPlansApi } from '../../api/processPlans';
 import { useAuth } from '../../contexts/AuthContext';
 import { BlockSelector } from '../forms/fields/BlockSelector';
@@ -51,7 +52,11 @@ export function ProcessPlanDialog({
 }) {
     const { apiClient } = useAuth();
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const actualIsMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const { viewMode } = useViewMode();
+    
+    // Determine if we should use mobile layout
+    const isMobile = viewMode === 'mobile' || (viewMode === 'auto' && actualIsMobile);
     const [formData, setFormData] = useState({
         block: null, // { source_database: string, id: number } | null
         bins: 0,

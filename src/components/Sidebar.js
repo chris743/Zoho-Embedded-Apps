@@ -27,6 +27,7 @@ import {
     ExpandLess,
     ExpandMore
 } from '@mui/icons-material';
+import { ViewModeToggle } from './ViewModeToggle';
 
 const DRAWER_WIDTH = 280;
 const COLLAPSED_WIDTH = 64;
@@ -72,7 +73,7 @@ const menuItems = [
 ];
 
 export function Sidebar({ mobileOpen, onMobileToggle, isMobile }) {
-    const [collapsed, setCollapsed] = useState(!isMobile); // Start expanded on mobile
+    const [collapsed, setCollapsed] = useState(false); // Always start expanded
     const [expandedItems, setExpandedItems] = useState({});
     const navigate = useNavigate();
     const location = useLocation();
@@ -145,7 +146,7 @@ export function Sidebar({ mobileOpen, onMobileToggle, isMobile }) {
                         onClick={() => handleItemClick(item)}
                         sx={{
                             minHeight: 48,
-                            justifyContent: (collapsed || isMobile) ? 'center' : 'initial',
+                            justifyContent: collapsed ? 'center' : 'initial',
                             px: 2.5,
                             py: 1.5,
                             borderRadius: 1,
@@ -163,14 +164,14 @@ export function Sidebar({ mobileOpen, onMobileToggle, isMobile }) {
                         <ListItemIcon
                             sx={{
                                 minWidth: 0,
-                                mr: (collapsed || isMobile) ? 0 : 3,
+                                mr: collapsed ? 0 : 3,
                                 justifyContent: 'center',
                                 color: active ? theme.palette.primary.main : theme.palette.text.secondary,
                             }}
                         >
                             <item.icon />
                         </ListItemIcon>
-                        {!(collapsed || isMobile) && (
+                        {!collapsed && (
                             <>
                                 <ListItemText 
                                     primary={item.label} 
@@ -187,7 +188,7 @@ export function Sidebar({ mobileOpen, onMobileToggle, isMobile }) {
                     </ListItemButton>
                 </ListItem>
 
-                {!(collapsed || isMobile) && hasChildren && (
+                {!collapsed && hasChildren && (
                     <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                         <List component="div" disablePadding>
                             {item.children.filter(child => hasRole(child.requiresRole)).map((child) => (
@@ -283,27 +284,30 @@ export function Sidebar({ mobileOpen, onMobileToggle, isMobile }) {
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: (collapsed || isMobile) ? 'center' : 'space-between',
-                        p: (collapsed || isMobile) ? 1 : 2,
+                        justifyContent: collapsed ? 'center' : 'space-between',
+                        p: collapsed ? 1 : 2,
                         minHeight: 64,
                     }}
                 >
-                    {!(collapsed || isMobile) && (
+                    {!collapsed && (
                         <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
                             Cobblestone
                         </Typography>
                     )}
-                    {!(collapsed || isMobile) && (
-                        <IconButton 
-                            onClick={handleToggleCollapse}
-                            size="small"
-                            sx={{
-                                border: `1px solid ${theme.palette.divider}`,
-                                borderRadius: 1,
-                            }}
-                        >
-                            <ChevronLeftIcon />
-                        </IconButton>
+                    {!collapsed && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <ViewModeToggle />
+                            <IconButton 
+                                onClick={handleToggleCollapse}
+                                size="small"
+                                sx={{
+                                    border: `1px solid ${theme.palette.divider}`,
+                                    borderRadius: 1,
+                                }}
+                            >
+                                <ChevronLeftIcon />
+                            </IconButton>
+                        </Box>
                     )}
                 </Box>
                 
@@ -314,7 +318,7 @@ export function Sidebar({ mobileOpen, onMobileToggle, isMobile }) {
                 </List>
 
                 {/* User Section */}
-                {!(collapsed || isMobile) && (
+                {!collapsed && (
                     <>
                         <Divider />
                         <Box sx={{ p: 2 }}>

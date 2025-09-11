@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { Box, useTheme, useMediaQuery } from '@mui/material';
 import { Sidebar } from './Sidebar';
+import { useViewMode } from '../contexts/ViewModeContext';
 
 export function AppLayout({ children }) {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const actualIsMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const { viewMode } = useViewMode();
     const [mobileOpen, setMobileOpen] = useState(false);
+
+    // Determine if we should use mobile layout
+    const isMobile = viewMode === 'mobile' || (viewMode === 'auto' && actualIsMobile);
 
     const handleMobileToggle = () => {
         setMobileOpen(!mobileOpen);

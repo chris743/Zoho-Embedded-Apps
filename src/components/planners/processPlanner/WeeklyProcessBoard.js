@@ -8,8 +8,10 @@ import {
     DialogContent,
     DialogActions,
     useMediaQuery,
-    useTheme
+    useTheme,
+    Typography
 } from '@mui/material';
+import { useViewMode } from '../../../contexts/ViewModeContext';
 import {
     PlayArrow as StartIcon,
     CheckCircle as CompleteIcon,
@@ -37,7 +39,11 @@ export function WeeklyProcessBoard({
 }) {
     const { apiClient } = useAuth();
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const actualIsMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const { viewMode } = useViewMode();
+    
+    // Determine if we should use mobile layout
+    const isMobile = viewMode === 'mobile' || (viewMode === 'auto' && actualIsMobile);
     
     // Helper functions for week calculations (Sunday start)
     const startOfWeek = useCallback((date) => {
@@ -404,7 +410,17 @@ export function WeeklyProcessBoard({
             <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
                 {isMobile ? (
                     // Mobile: Vertical stack of day columns
-                    <Stack direction="column" spacing={1} sx={{ pb: 2, width: '100%' }}>
+                    <Box sx={{ 
+                        p: 2,
+                        bgcolor: 'grey.50',
+                        borderRadius: 2,
+                        border: '2px solid',
+                        borderColor: 'primary.200'
+                    }}>
+                        <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', color: 'primary.main' }}>
+                            📱 Mobile View - Weekly Process Plans
+                        </Typography>
+                        <Stack direction="column" spacing={2} sx={{ width: '100%' }}>
                         {dayKeys.map(day => {
                             const dayDate = new Date(day);
                             // Offset the display date by +1 day to match actual associated dates
@@ -429,7 +445,8 @@ export function WeeklyProcessBoard({
                                 />
                             );
                         })}
-                    </Stack>
+                        </Stack>
+                    </Box>
                 ) : (
                     // Desktop: Horizontal row of day columns
                     <Stack direction="row" spacing={2} sx={{ pb: 2, width: '100%' }}>

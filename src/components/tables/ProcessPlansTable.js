@@ -24,6 +24,7 @@ import {
     CardContent,
     Divider
 } from '@mui/material';
+import { useViewMode } from '../../contexts/ViewModeContext';
 import {
     Edit as EditIcon,
     MoreVert as MoreVertIcon,
@@ -79,10 +80,14 @@ export function ProcessPlansTable({
 }) {
     const { apiClient } = useAuth();
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const actualIsMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const { viewMode } = useViewMode();
     const [search, setSearch] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedProcessPlan, setSelectedProcessPlan] = useState(null);
+
+    // Determine if we should use mobile layout
+    const isMobile = viewMode === 'mobile' || (viewMode === 'auto' && actualIsMobile);
 
     const processPlansApi = useMemo(() => ProcessPlansApi(apiClient), [apiClient]);
 
@@ -307,6 +312,14 @@ export function ProcessPlansTable({
                 }}>
                     <Typography variant="h6">
                         Process Plans - {filteredData.length} Plans
+                        {isMobile && (
+                            <Chip 
+                                label="📱 Mobile View" 
+                                size="small" 
+                                color="primary" 
+                                sx={{ ml: 2, fontSize: '0.7rem' }}
+                            />
+                        )}
                     </Typography>
                     <Box sx={{ 
                         display: "flex", 
@@ -354,7 +367,14 @@ export function ProcessPlansTable({
 
             {isMobile ? (
                 // Mobile Card Layout
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: 2,
+                    p: 1,
+                    bgcolor: 'grey.50',
+                    borderRadius: 2
+                }}>
                     {groupedData.length === 0 ? (
                         <Box sx={{ textAlign: 'center', py: 4 }}>
                             <Typography color="text.secondary">
@@ -392,8 +412,15 @@ export function ProcessPlansTable({
                                 const textColor = commodity ? getContrastColor(commodityColor) : '#000';
 
                                 return (
-                                    <Card key={plan.id} sx={{ cursor: 'pointer', '&:hover': { boxShadow: 3 } }}>
-                                        <CardContent sx={{ p: 2 }}>
+                                    <Card key={plan.id} sx={{ 
+                                        cursor: 'pointer', 
+                                        '&:hover': { boxShadow: 4 },
+                                        border: '2px solid',
+                                        borderColor: 'primary.200',
+                                        borderRadius: 3,
+                                        boxShadow: 2
+                                    }}>
+                                        <CardContent sx={{ p: 3 }}>
                                             {/* Header with Block info and Actions */}
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                                                 <Box sx={{ flex: 1 }}>

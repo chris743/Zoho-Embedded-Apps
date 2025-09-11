@@ -48,18 +48,19 @@ export function DayColumn({
     
     return (
         <Paper
-            elevation={0}
+            elevation={isMobile ? 3 : 0}
             sx={{
                 width: isMobile ? '100%' : 'calc((100% - 96px) / 7)',
                 minWidth: isMobile ? '100%' : 'calc((100% - 96px) / 7)',
                 maxWidth: isMobile ? '100%' : 'calc((100% - 96px) / 7)',
                 height: 'fit-content',
                 minHeight: isMobile ? 200 : 400,
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: isToday ? 'primary.main' : 'grey.200',
-                bgcolor: isWeekend ? 'grey.25' : 'white',
-                overflow: 'hidden'
+                borderRadius: isMobile ? 3 : 2,
+                border: isMobile ? '2px solid' : '1px solid',
+                borderColor: isMobile ? 'primary.300' : (isToday ? 'primary.main' : 'grey.200'),
+                bgcolor: isMobile ? 'primary.50' : (isWeekend ? 'grey.25' : 'white'),
+                overflow: 'hidden',
+                boxShadow: isMobile ? 2 : 'none'
             }}
         >
             {/* Day Header */}
