@@ -317,14 +317,40 @@ export function HarvestPlansTable({
             const forklift = contractorById.get(p.forklift_contractor_id ?? -1);
             const hauler = contractorById.get(p.hauler_id ?? -1);
 
+            // Check if this is a placeholder grower
+            const isPlaceholder = p.grower_block_source_database === "PLACEHOLDER" && p.grower_block_id === 999999;
+            let grower_name = "";
+            let block_name = "";
+            let commodityName = "";
+
+            if (isPlaceholder) {
+                // Extract placeholder grower info from notes
+                const placeholderMatch = p.notes_general?.match(/PLACEHOLDER GROWER: ([^|]+) \| COMMODITY: ([^\n]+)/);
+                if (placeholderMatch) {
+                    grower_name = placeholderMatch[1].trim();
+                    commodityName = placeholderMatch[2].trim();
+                    block_name = "Placeholder Block";
+                } else {
+                    grower_name = "Unknown Placeholder";
+                    block_name = "Placeholder Block";
+                    commodityName = p.commodity?.commodity || p.commodity?.invoiceCommodity || "";
+                }
+            } else {
+                // Regular block
+                grower_name = p.block?.growerName || "";
+                block_name = p.block?.name || `${p.grower_block_id}`;
+                commodityName = p.commodity?.commodity || p.commodity?.invoiceCommodity || "";
+            }
+
             return {
                 ...p,
-                commodityName: p.commodity?.commodity || p.commodity?.invoiceCommodity || "",
-                grower_name: p.block?.growerName || "",
-                block_name: p.block?.name || `${p.grower_block_id}`,
+                commodityName,
+                grower_name,
+                block_name,
                 laborContractorName: labor?.name ?? labor?.NAME ?? "",
                 forkliftContractorName: forklift?.name ?? forklift?.NAME ?? "",
                 truckingContractorName: hauler?.name ?? hauler?.NAME ?? "",
+                isPlaceholder
             };
         });
     }, [plans, contractorById]);

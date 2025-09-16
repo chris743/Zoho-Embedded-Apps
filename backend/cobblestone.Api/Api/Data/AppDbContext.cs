@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<HarvestContractor> HarvestContractors => Set<HarvestContractor>();
     public DbSet<Pool> Pools => Set<Pool>();
     public DbSet<CommodityClass> Commodities => Set<CommodityClass>();
+    public DbSet<PlaceholderGrower> PlaceholderGrowers => Set<PlaceholderGrower>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -92,6 +93,39 @@ public class AppDbContext : DbContext
 
             b.Property(x => x.InvoiceCommodity).HasMaxLength(50).IsUnicode(true);
             b.Property(x => x.Commodity).HasMaxLength(50).IsUnicode(true);
+        });
+
+        modelBuilder.Entity<PlaceholderGrower>(b =>
+        {
+            b.ToTable("PlaceholderGrowers", "dbo");
+            b.HasKey(x => x.id);
+
+            b.Property(x => x.grower_name)
+                .IsRequired()
+                .HasMaxLength(100)
+                .IsUnicode(false);
+
+            b.Property(x => x.commodity_name)
+                .IsRequired()
+                .HasMaxLength(100)
+                .IsUnicode(false);
+
+            b.Property(x => x.notes)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+
+            b.Property(x => x.created_at)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            b.Property(x => x.updated_at)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            b.Property(x => x.is_active)
+                .HasDefaultValue(true);
+
+            // Add index for better query performance
+            b.HasIndex(x => x.is_active);
+            b.HasIndex(x => new { x.grower_name, x.commodity_name });
         });
     }
 }

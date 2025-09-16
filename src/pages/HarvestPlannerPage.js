@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { HarvestPlansTable } from "../components/tables/HarvestPlansTable";
-import { Box, Button, Container, Stack, TextField, Snackbar, ToggleButtonGroup, ToggleButton, Paper, Typography, Divider } from "@mui/material";
+import { Box, Button, Container, Stack, TextField, Snackbar, ToggleButtonGroup, ToggleButton, Paper, Typography, Divider, useMediaQuery, useTheme } from "@mui/material";
+import { useViewMode } from "../contexts/ViewModeContext";
 import { DataGrid } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -24,6 +25,13 @@ import { useZohoAuth } from "../utils/zohoAuth";
 
 
 export default function HarvestPlannerPage() {
+    const theme = useTheme();
+    const actualIsMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const { viewMode } = useViewMode();
+    
+    // Determine if we should use mobile layout
+    const isMobile = viewMode === 'mobile' || (viewMode === 'auto' && actualIsMobile);
+    
     const [weekStart, setWeekStart] = useState(new Date());
     const [apiBase, setApiBase] = useState(() => localStorage.getItem("apiBase") || "https://api.cobblestonecloud.com/api/v1");
     const [jwt, setJwt] = useState(() => localStorage.getItem("jwt") || "");
@@ -73,7 +81,9 @@ export default function HarvestPlannerPage() {
     const [pools, setPools] = useState([]);
     const [commodities, setCommodities] = useState(null);
 
+    // Force table view on mobile, otherwise allow user choice
     const [view, setView] = useState("table");
+    const effectiveView = isMobile ? "table" : view;
 
 
     // Blocks cache for the Block picker (source_database + GABLOCKIDX)
@@ -262,38 +272,40 @@ const filtered = rows.filter(r => {
                 
                 <Box sx={{ flexGrow: 1 }} />
                 
-                <ToggleButtonGroup
-                    value={view}
-                    exclusive
-                    onChange={(_, val) => val && setView(val)}
-                    size="small"
-                    sx={{
-                        '& .MuiToggleButton-root': {
-                            border: '1px solid #E0E4E7',
-                            borderRadius: 1,
-                            px: 2,
-                            py: 0.75,
-                            textTransform: 'none',
-                            fontWeight: 500,
-                            '&.Mui-selected': {
-                                bgcolor: 'primary.main',
-                                color: 'white',
-                                '&:hover': {
-                                    bgcolor: 'primary.dark',
+                {!isMobile && (
+                    <ToggleButtonGroup
+                        value={view}
+                        exclusive
+                        onChange={(_, val) => val && setView(val)}
+                        size="small"
+                        sx={{
+                            '& .MuiToggleButton-root': {
+                                border: '1px solid #E0E4E7',
+                                borderRadius: 1,
+                                px: 2,
+                                py: 0.75,
+                                textTransform: 'none',
+                                fontWeight: 500,
+                                '&.Mui-selected': {
+                                    bgcolor: 'primary.main',
+                                    color: 'white',
+                                    '&:hover': {
+                                        bgcolor: 'primary.dark',
+                                    },
                                 },
-                            },
-                        }
-                    }}
-                >
-                    <ToggleButton value="table">
-                        <TableRowsIcon sx={{ mr: 1, fontSize: '1rem' }} />
-                        Table View
-                    </ToggleButton>
-                    <ToggleButton value="column">
-                        <ViewColumnIcon sx={{ mr: 1, fontSize: '1rem' }} />
-                        Column View
-                    </ToggleButton>
-                </ToggleButtonGroup>
+                            }
+                        }}
+                    >
+                        <ToggleButton value="table">
+                            <TableRowsIcon sx={{ mr: 1, fontSize: '1rem' }} />
+                            Table View
+                        </ToggleButton>
+                        <ToggleButton value="column">
+                            <ViewColumnIcon sx={{ mr: 1, fontSize: '1rem' }} />
+                            Column View
+                        </ToggleButton>
+                    </ToggleButtonGroup>
+                )}
             </Stack>
         </Paper>
 
@@ -306,6 +318,7 @@ const filtered = rows.filter(r => {
             blocks={blocks}
             pools={pools}
             contractors={contractors}
+            commodities={commodities}
         />
         <ViewPlanDialog
             open={viewDialogOpen}
@@ -330,7 +343,7 @@ const filtered = rows.filter(r => {
             }}
         />
         
-        {view === "table" ? (
+        {effectiveView === "table" ? (
             <Paper elevation={0} sx={{ bgcolor: 'background.paper', border: '1px solid #E8EBF0', borderRadius: 2 }}>
                 <HarvestPlansTable
                     plans={filtered}

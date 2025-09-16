@@ -23,4 +23,8 @@ public string? deliver_to { get; set; } // varchar(30)
 public string? packed_by { get; set; } // varchar(30)
 public DateTime? date { get; set; } // date
 public int? bins { get; set; } // int
+
+// Placeholder grower reference
+public Guid? placeholder_grower_id { get; set; } // uniqueidentifier (FK to PlaceholderGrower)
+public PlaceholderGrower? placeholder_grower { get; set; } // Navigation property
 }

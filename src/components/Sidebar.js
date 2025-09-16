@@ -60,13 +60,17 @@ const menuItems = [
         id: 'admin',
         label: 'Administration',
         icon: SettingsIcon,
-        requiresRole: ['admin', 'manager'],
         children: [
             {
                 id: 'users',
                 label: 'User Management',
                 path: '/users',
                 requiresRole: ['admin']
+            },
+            {
+                id: 'placeholder-growers',
+                label: 'Placeholder Growers',
+                path: '/placeholder-growers'
             }
         ]
     }

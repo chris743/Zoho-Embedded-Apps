@@ -9,6 +9,7 @@ import HarvestContractorsPage from "./pages/HarvestContractorsPage";
 import HarvestPlannerPage from "./pages/HarvestPlannerPage";
 import ProcessPlansPage from "./pages/ProcessPlansPage";
 import UserManagementPage from "./pages/UserManagementPage";
+import { PlaceholderGrowersPage } from "./pages/PlaceholderGrowersPage";
 
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
                                 <Route path="/harvestplans" element={<HarvestPlannerPage />} />
                                 <Route path="/processplans" element={<ProcessPlansPage />} />
                                 <Route path="/users" element={<UserManagementPage />} />
+                                <Route path="/placeholder-growers" element={<PlaceholderGrowersPage />} />
                             </Routes>
                         </AppLayout>
                     </Router>

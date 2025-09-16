@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Tabs, Tab, Box } from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Tabs, Tab, Box, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel } from "@mui/material";
 import { BlockSelector } from "../forms/fields/BlockSelector"
 import { PoolSelector } from "../forms/fields/PoolSelector";
+import { PlaceholderGrowerSelector } from "../forms/fields/PlaceholderGrowerSelector";
 import ContractorRolePicker from "../forms/fields/ContractorSelector";
 
-export default function PlannerDialog({ open, initial, onClose, onSaved, svc, blocks = [], pools = [], contractors=[]}) {
+export default function PlannerDialog({ open, initial, onClose, onSaved, svc, blocks = [], pools = [], contractors=[], commodities=[]}) {
     const empty = {
         date: new Date().toISOString().slice(0, 10),
         grower_block_source_database: "DM01",
@@ -20,7 +21,11 @@ export default function PlannerDialog({ open, initial, onClose, onSaved, svc, bl
         hauling_rate: null,
         forklift_contractor_id: null,
         forklift_rate: null,
-        pool_id: null
+        pool_id: null,
+        use_placeholder_grower: false,
+        placeholder_grower_id: null,
+        placeholder_grower_name: "",
+        placeholder_commodity_name: ""
     };
     const [model, setModel] = useState(empty);
     const isEdit = !!initial;
@@ -65,20 +70,77 @@ export default function PlannerDialog({ open, initial, onClose, onSaved, svc, bl
                     <Box>
                         <Stack spacing={2} sx={{ mt: 1 }}>
                             <TextField type="date" label="Date" InputLabelProps={{ shrink: true }} value={model.date} onChange={(e) => setModel({ ...model, date: e.target.value })} required />
-                            <BlockSelector
-                                blocks = {blocks}
-                                    value = {{source_database: model.grower_block_source_database,
-                                    id: model.grower_block_id
+                            
+                            <FormControl component="fieldset">
+                                <FormLabel component="legend">Grower Selection</FormLabel>
+                                <RadioGroup
+                                    value={model.use_placeholder_grower ? "placeholder" : "specific"}
+                                    onChange={(e) => setModel({ 
+                                        ...model, 
+                                        use_placeholder_grower: e.target.value === "placeholder",
+                                        // Clear the other option when switching
+                                        ...(e.target.value === "placeholder" ? {
+                                            
+                                        } : {
+                                            placeholder_grower_name: "",
+                                            placeholder_commodity_name: ""
+                                        })
+                                    })}
+                                >
+                                    <FormControlLabel 
+                                        value="specific" 
+                                        control={<Radio />} 
+                                        label="Specific Block" 
+                                    />
+                                    <FormControlLabel 
+                                        value="placeholder" 
+                                        control={<Radio />} 
+                                        label="Placeholder Grower (block unknown)" 
+                                    />
+                                </RadioGroup>
+                            </FormControl>
+
+                            {!model.use_placeholder_grower ? (
+                                <BlockSelector
+                                    blocks = {blocks}
+                                        value = {{source_database: model.grower_block_source_database,
+                                        id: model.grower_block_id
+                                    }}
+                                    onChange={(next) => {
+                                    if (!next) return;
+                                    setModel({
+                                    ...model,
+                                    grower_block_source_database: next.source_database,
+                                    grower_block_id: next.id,
+                                    });
                                 }}
-                                onChange={(next) => {
-                                if (!next) return;
-                                setModel({
-                                ...model,
-                                grower_block_source_database: next.source_database,
-                                grower_block_id: next.id,
-                                });
-                            }}
-                            />
+                                />
+                            ) : (
+                                <PlaceholderGrowerSelector
+                                    value={{
+                                        id: model.placeholder_grower_id,
+                                        grower_name: model.placeholder_grower_name,
+                                        commodity_name: model.placeholder_commodity_name
+                                    }}
+                                    onChange={(next) => {
+                                        if (next) {
+                                            setModel({
+                                                ...model,
+                                                placeholder_grower_id: next.id,
+                                                placeholder_grower_name: next.grower_name,
+                                                placeholder_commodity_name: next.commodity_name
+                                            });
+                                        } else {
+                                            setModel({
+                                                ...model,
+                                                placeholder_grower_id: null,
+                                                placeholder_grower_name: "",
+                                                placeholder_commodity_name: ""
+                                            });
+                                        }
+                                    }}
+                                />
+                            )}
                             <PoolSelector
                                 pools={pools}
                                 value={model.pool_id}                 // numeric or null
@@ -156,6 +218,22 @@ export default function PlannerDialog({ open, initial, onClose, onSaved, svc, bl
 
 // helpers to map between API DTO shape and UI model
 function normalize(x) {
+    // Determine if this is a placeholder grower based on block source and ID
+    const isPlaceholder = x.grower_block_source_database === "PLACEHOLDER" && x.grower_block_id === 999999;
+    
+    // Extract placeholder info from notes if it exists
+    let placeholderGrowerName = '';
+    let placeholderCommodityName = '';
+    let placeholderGrowerId = null;
+    
+    if (isPlaceholder && x.notes_general) {
+        const placeholderMatch = x.notes_general.match(/PLACEHOLDER GROWER: ([^|]+) \| COMMODITY: ([^\n]+)/);
+        if (placeholderMatch) {
+            placeholderGrowerName = placeholderMatch[1].trim();
+            placeholderCommodityName = placeholderMatch[2].trim();
+        }
+    }
+    
     return {
         id: x.id,
         date: (x.date?.slice?.(0, 10)) || '',
@@ -172,13 +250,33 @@ function normalize(x) {
         hauling_rate: x.hauling_rate ?? null,
         forklift_contractor_id: x.forklift_contractor_id ?? null,
         forklift_rate: x.forklift_rate ?? null,
-        pool_id: x.pool_id ?? null
+        pool_id: x.pool_id ?? null,
+        use_placeholder_grower: isPlaceholder,
+        placeholder_grower_id: x.placeholder_grower_id ?? null,
+        placeholder_grower_name: placeholderGrowerName,
+        placeholder_commodity_name: placeholderCommodityName
     };
 }
 function toDto(m) {
+    // Handle placeholder grower by storing info in notes and using special block ID
+    let notes = m.notes_general || "";
+    let blockSource = m.grower_block_source_database;
+    let blockId = m.grower_block_id;
+    let placeholderGrowerId = null;
+    
+    if (m.use_placeholder_grower && m.placeholder_grower_name && m.placeholder_commodity_name) {
+        // Use special placeholder block ID (999999) and store grower info in notes
+        blockSource = "PLACEHOLDER";
+        blockId = 999999;
+        placeholderGrowerId = m.placeholder_grower_id;
+        const placeholderInfo = `PLACEHOLDER GROWER: ${m.placeholder_grower_name} | COMMODITY: ${m.placeholder_commodity_name}`;
+        notes = notes ? `${placeholderInfo}\n\n${notes}` : placeholderInfo;
+    }
+    
     return {
-        grower_block_source_database: m.grower_block_source_database,
-        grower_block_id: m.grower_block_id,
+        grower_block_source_database: blockSource,
+        grower_block_id: blockId,
+        placeholder_grower_id: placeholderGrowerId,
         planned_bins: m.planned_bins,
         contractor_id: m.contractor_id ?? null,
         harvesting_rate: m.harvesting_rate ?? null,
@@ -187,7 +285,7 @@ function toDto(m) {
         forklift_contractor_id: m.forklift_contractor_id ?? null,
         forklift_rate: m.forklift_rate ?? null,
         pool_id: m.pool_id ?? null,
-        notes_general: m.notes_general || null,
+        notes_general: notes || null,
         deliver_to: m.deliver_to || null,
         packed_by: m.packed_by || null,
         date: m.date ? new Date(m.date).toISOString() : null,
