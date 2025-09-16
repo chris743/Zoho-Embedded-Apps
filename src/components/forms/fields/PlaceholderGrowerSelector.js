@@ -36,7 +36,7 @@ export function PlaceholderGrowerSelector({ value, onChange }) {
     const [dialogOpen, setDialogOpen] = useState(false);
 
     // API setup - following exact same pattern as HarvestPlannerPage
-    const [apiBase, setApiBase] = useState(() => localStorage.getItem("apiBase") || "http://localhost:5048/api/v1");
+    const [apiBase, setApiBase] = useState(() => localStorage.getItem("apiBase") || "https://api.cobblestonecloud.com/api/v1");
     const [jwt, setJwt] = useState(() => localStorage.getItem("jwt") || "");
     
     // Get authentication state
