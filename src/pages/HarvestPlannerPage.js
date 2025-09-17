@@ -89,7 +89,7 @@ export default function HarvestPlannerPage() {
     // Blocks cache for the Block picker (source_database + GABLOCKIDX)
     const loadBlocks = async () => {
         try {
-            const { data } = await blocksSvc.list({ take: 1000 });
+            const { data } = await blocksSvc.list({ take: 10000 });
             const arr = Array.isArray(data) ? data : (data?.items || data?.value || data?.$values || Object.values(data || {}));
             setBlocks(arr);
         } catch (err) { console.warn("Blocks load failed", err); }
@@ -97,7 +97,7 @@ export default function HarvestPlannerPage() {
 
     const loadPools = async () => {
         try {
-            const { data } = await poolsSvc.list({ take: 1000 })
+            const { data } = await poolsSvc.list({ take: 10000 })
             const arr = Array.isArray(data) ? data : (data?.items || data?.value || data?.$values || Object.values(data || {}));
             setPools(arr)
         } catch (err) {console.error(err); setToast(err?.message || "Failed to get pools");}
@@ -105,7 +105,7 @@ export default function HarvestPlannerPage() {
 
     const loadContractors = async () => {
         try {
-            const {data} = await contractorSvc.list({ take: 1000 })
+            const {data} = await contractorSvc.list({ take: 10000 })
             const arr = Array.isArray(data) ? data : (data?.items || data?.values)
             setContractors(arr)
         } catch (err) {console.error(err);}
@@ -113,7 +113,7 @@ export default function HarvestPlannerPage() {
 
     const loadCommodities = async () => {
         try {
-            const {data} = await commoditiesSvc.list({ take: 1000 })
+            const {data} = await commoditiesSvc.list({ take: 10000 })
             const arr = Array.isArray(data) ? data :(data?.items || data?.values)
             setCommodities(arr)
             
@@ -130,7 +130,7 @@ export default function HarvestPlannerPage() {
     const load = async () => {
         setLoading(true);
         try {
-            const { data } = await svc.list({ take: 1000 });
+            const { data } = await svc.list({ take: 10000 });
             const arr = Array.isArray(data) ? data : (data?.items || data?.value || data?.$values || Object.values(data || {}));
             setRows(arr);
         } catch (err) { console.error(err); setToast(err?.message || "Failed to load plans"); }

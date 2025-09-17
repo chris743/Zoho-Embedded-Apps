@@ -22,7 +22,7 @@ export default function HarvestContractorsPage() {
     const load = async () => {
         setLoading(true);
         try {
-            const { data } = await svc.list({ search, take: 200 });
+            const { data } = await svc.list({ search });
             const arr = Array.isArray(data) ? data : (data?.items || data?.value || data?.$values || Object.values(data || {}));
             setRows(arr);
         } catch (err) { 

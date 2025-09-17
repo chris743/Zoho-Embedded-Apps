@@ -15,8 +15,14 @@ export function PoolSelector({ pools = [], value, onChange }) {
   const options = useMemo(() => {
     return (pools || [])
       .filter((p) => {
-        const iccClosedFlag = p.icclosedflag;
-        return iccClosedFlag !== "N";
+        const icClosedFlag = p.icclosedflag;
+        const code = p.code ?? p.CODE ?? p.id ?? "";
+        
+        // Keep existing closed flag filter AND add "C" filter
+        const isNotClosed = icClosedFlag === "N";
+        const startsWithC = code.toUpperCase().startsWith("C");
+        
+        return isNotClosed && startsWithC;
       })
       .map((p) => {
         const poolId =

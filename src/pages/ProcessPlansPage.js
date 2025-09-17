@@ -154,7 +154,7 @@ export default function ProcessPlansPage() {
         setLoading(true);
         try {
             const params = {
-                take: 1000,
+                take: 10000,
                 orderBy: 'run_date asc, row_order asc'
             };
             
@@ -186,7 +186,7 @@ export default function ProcessPlansPage() {
 
     const loadBlocks = async () => {
         try {
-            const response = await blocksApi.list({ take: 1000 });
+            const response = await blocksApi.list({ take: 10000 });
             const data = Array.isArray(response.data) ? response.data : 
                        response.data?.items || response.data?.value || [];
             setBlocks(data);
@@ -197,7 +197,7 @@ export default function ProcessPlansPage() {
 
     const loadPools = async () => {
         try {
-            const response = await poolsApi.list({ take: 1000 });
+            const response = await poolsApi.list({ take: 10000 });
             const data = Array.isArray(response.data) ? response.data : 
                        response.data?.items || response.data?.value || [];
             setPools(data);
@@ -208,7 +208,7 @@ export default function ProcessPlansPage() {
 
     const loadContractors = async () => {
         try {
-            const response = await contractorsApi.list({ take: 1000 });
+            const response = await contractorsApi.list({ take: 10000 });
             const data = Array.isArray(response.data) ? response.data : 
                        response.data?.items || response.data?.value || [];
             setContractors(data);
@@ -219,7 +219,7 @@ export default function ProcessPlansPage() {
 
     const loadCommodities = async () => {
         try {
-            const response = await commoditiesApi.list({ take: 1000 });
+            const response = await commoditiesApi.list({ take: 10000 });
             const data = Array.isArray(response.data) ? response.data : 
                        response.data?.items || response.data?.value || [];
             setCommodities(data);
