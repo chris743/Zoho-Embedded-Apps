@@ -246,11 +246,6 @@ export default function ProcessPlansPage() {
         loadAll();
     }, []);
 
-    // Reload process plans when needed
-    useEffect(() => {
-        loadProcessPlans();
-    }, []);
-
     // Handlers
     const handleViewChange = (event, newView) => {
         if (newView !== null) {

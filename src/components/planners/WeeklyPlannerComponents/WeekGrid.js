@@ -1,11 +1,13 @@
-import { DragDropContext } from "@hello-pangea/dnd";
 import { memo } from "react";
 import { DayColumn } from "./DayColumn";
 import { Box } from "@mui/material";
-import { toYMD } from "../../../utils/dateUtils";
+// No dateUtils imports needed since we're working with dayKeys directly
 
-export const WeekGrid = memo(({ days, buckets, onEdit, onView, onDragEnd }) => (
-  <DragDropContext onDragEnd={onDragEnd}>
+export const WeekGrid = memo(({ dayKeys, buckets, isMobile, onEdit, onView }) => {
+  // Convert dayKeys back to Date objects for the grid
+  const days = dayKeys ? dayKeys.map(ymd => new Date(ymd + "T00:00:00")) : [];
+  
+  return (
     <Box sx={{ 
       display: "grid", 
       gridTemplateColumns: "repeat(7, 1fr)", 
@@ -13,7 +15,7 @@ export const WeekGrid = memo(({ days, buckets, onEdit, onView, onDragEnd }) => (
       alignItems: "stretch" // Makes all columns same height
     }}>
       {days.map((day) => {
-        const ymd = toYMD(day);
+        const ymd = dayKeys[days.indexOf(day)];
         const cards = buckets[ymd] || [];
         
         // Safely get day of week
@@ -36,11 +38,12 @@ export const WeekGrid = memo(({ days, buckets, onEdit, onView, onDragEnd }) => (
             onEdit={onEdit}
             onView={onView}
             isWeekend={isWeekend}
+            isMobile={isMobile}
           />
         );
       })}
     </Box>
-  </DragDropContext>
-));
+  );
+});
 
 WeekGrid.displayName = 'WeekGrid';

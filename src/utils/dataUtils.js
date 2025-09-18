@@ -168,7 +168,7 @@ export function buildProcessBuckets(plans, dayKeys, lookupMaps) {
 
 // Sorting utilities
 export function sortPlansByCommodityAndBins(plans) {
-    return plans.sort((a, b) => {
+    return [...plans].sort((a, b) => {
         // First sort by commodity name
         const commodityA = a._card?.commodityName || "";
         const commodityB = b._card?.commodityName || "";

@@ -20,7 +20,17 @@ export const AuthProvider = ({ children }) => {
 
     // Create API client with current token
     const apiClient = useMemo(() => {
-        const apiBase = localStorage.getItem('apiBase') || 'https://api.cobblestonecloud.com/api/v1';
+        let apiBase = localStorage.getItem('apiBase');
+        const defaultUrl = 'https://api.cobblestonecloud.com/api/v1';
+        
+        // Auto-fix: If stored URL contains localhost, clear it and use the correct URL
+        if (apiBase && (apiBase.includes('localhost') || apiBase.includes('5048'))) {
+            console.log('🔧 Auto-fixing localhost API URL to production URL');
+            localStorage.removeItem('apiBase');
+            apiBase = defaultUrl;
+        } else {
+            apiBase = apiBase || defaultUrl;
+        }
         const currentToken = token || localStorage.getItem('authToken');
         console.log('🔍 Creating API client with token:', currentToken ? `${currentToken.substring(0, 20)}...` : 'null');
         return makeApi(apiBase, currentToken);

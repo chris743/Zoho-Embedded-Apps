@@ -3,14 +3,18 @@ import axios from "axios";
 import { getSessionKey } from "../utils/zohoAuth";
 
 export function makeApi(baseURL, jwt) {
+    console.log('🔍 Creating API client with baseURL:', baseURL);
     const instance = axios.create({ baseURL });
     
     instance.interceptors.request.use((cfg) => {
         // Use session key for authentication if available, otherwise fall back to JWT
         const sessionKey = getSessionKey();
+        const fullUrl = `${baseURL}${cfg.url}`;
         
         console.log('🔍 API Request Debug:', {
-            url: cfg.url,
+            baseURL,
+            relativeUrl: cfg.url,
+            fullUrl,
             method: cfg.method,
             sessionKey: sessionKey ? `${sessionKey.substring(0, 10)}...` : 'null',
             jwt: jwt ? `${jwt.substring(0, 10)}...` : 'null'

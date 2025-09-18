@@ -16,14 +16,15 @@ export const DropZone = memo(({ ymd, cards, onEdit, onView }) => (
           bgcolor: snapshot.isDraggingOver 
             ? 'primary.50' 
             : 'transparent',
-          transition: 'background-color 0.2s ease-in-out',
-          borderRadius: snapshot.isDraggingOver ? 1 : 0,
+          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          borderRadius: snapshot.isDraggingOver ? 2 : 0,
           border: snapshot.isDraggingOver 
             ? '2px dashed' 
             : '2px solid transparent',
           borderColor: snapshot.isDraggingOver 
             ? 'primary.300' 
-            : 'transparent'
+            : 'transparent',
+          transform: snapshot.isDraggingOver ? 'scale(1.01)' : 'scale(1)',
         }}
       >
         <PlanCardList cards={cards} onEdit={onEdit} onView={onView} />

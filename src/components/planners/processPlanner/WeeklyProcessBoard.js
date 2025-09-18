@@ -35,7 +35,10 @@ export function WeeklyProcessBoard({
     onEdit, 
     onSuccess, 
     onError,
-    weekStart
+    weekStart,
+    apiService, // Generic API service (ProcessPlansApi or HarvestPlansApi)
+    onProcessPlanUpdate, // For direct parent state updates
+    fieldMapping = { dateField: 'run_date', hasRowOrder: true } // Field mapping for different plan types
 }) {
     const { apiClient } = useAuth();
     const theme = useTheme();
@@ -69,7 +72,8 @@ export function WeeklyProcessBoard({
     const [selectedProcessPlan, setSelectedProcessPlan] = useState(null);
     const [harvestPlanDialog, setHarvestPlanDialog] = useState({ open: false, targetDate: null });
 
-    const processPlansApi = useMemo(() => ProcessPlansApi(apiClient), [apiClient]);
+    const defaultApi = useMemo(() => ProcessPlansApi(apiClient), [apiClient]);
+    const processPlansApi = apiService || defaultApi;
 
     // Create lookup maps
     const blockMap = useMemo(() => {
@@ -219,8 +223,8 @@ export function WeeklyProcessBoard({
         
         // Persist to server
         try {
-            if (sourceDay === destDay) {
-                // Same day reordering
+            if (sourceDay === destDay && fieldMapping.hasRowOrder) {
+                // Same day reordering (only for plans that support row_order)
                 const dayPlans = buckets[sourceDay] || [];
                 const sortedPlans = [...dayPlans].sort((a, b) => (a.row_order || 0) - (b.row_order || 0));
                 
@@ -237,30 +241,21 @@ export function WeeklyProcessBoard({
                     
                     await Promise.all(updatePromises);
                 }
-            } else {
-                // Different day - update run_date and reorder both days
-                const sourcePlans = (buckets[sourceDay] || []).filter(p => p.id !== planId);
-                const destPlans = [...(buckets[destDay] || [])];
-                const movedPlan = processPlans.find(p => p.id === planId);
+            } else if (sourceDay !== destDay) {
+                // Different day - update date field
+                const newDate = new Date(destDay);
+                const updateData = { [fieldMapping.dateField]: newDate.toISOString() };
                 
-                if (movedPlan) {
-                    destPlans.splice(destination.index, 0, movedPlan);
-                    
-                    const sourceUpdatePromises = sourcePlans.map((plan, index) => 
-                        processPlansApi.update(plan.id, {
-                            row_order: index
-                        })
-                    );
-                    
-                    const newRunDate = new Date(destDay);
-                    const destUpdatePromises = destPlans.map((plan, index) => 
-                        processPlansApi.update(plan.id, {
-                            run_date: plan.id === planId ? newRunDate.toISOString() : plan.run_date,
-                            row_order: index
-                        })
-                    );
-                    
-                    await Promise.all([...sourceUpdatePromises, ...destUpdatePromises]);
+                // Only add row_order if the plan type supports it
+                if (fieldMapping.hasRowOrder) {
+                    updateData.row_order = destination.index;
+                }
+                
+                await processPlansApi.update(planId, updateData);
+                
+                // Update parent state directly to avoid reload
+                if (onProcessPlanUpdate) {
+                    onProcessPlanUpdate(planId, updateData);
                 }
             }
         } catch (err) {

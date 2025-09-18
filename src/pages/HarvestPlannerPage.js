@@ -15,7 +15,7 @@ import { PoolsApi } from "../api/pools"
 import { ContractorsApi } from "../api/contractors";
 import { CommoditiesApi } from "../api/commodities";
 import { ScoutReportsApi } from "../api/scoutReports";
-import { WeeklyPlannerBoard } from "../components/planners/WeeklyPlannerComponents/WeeklyPlannerBoard";
+import { WeeklyProcessBoard } from "../components/planners/processPlanner/WeeklyProcessBoard";
 import { WeekPicker } from "../components/WeekPicker";
 import { DateRangePicker } from "../components/DateRangePicker";
 import ViewPlanDialog from "../components/harvestPlanViewModal/HarvestPlanViewModal";
@@ -33,7 +33,21 @@ export default function HarvestPlannerPage() {
     const isMobile = viewMode === 'mobile' || (viewMode === 'auto' && actualIsMobile);
     
     const [weekStart, setWeekStart] = useState(new Date());
-    const [apiBase, setApiBase] = useState(() => localStorage.getItem("apiBase") || "https://api.cobblestonecloud.com/api/v1");
+    const [apiBase, setApiBase] = useState(() => {
+        const stored = localStorage.getItem("apiBase");
+        const defaultUrl = "https://api.cobblestonecloud.com/api/v1";
+        const finalUrl = stored || defaultUrl;
+        console.log('🔍 API Base URL Debug:', { stored, defaultUrl, finalUrl });
+        
+        // Auto-fix: If stored URL contains localhost, clear it and use the correct URL
+        if (stored && (stored.includes('localhost') || stored.includes('5048'))) {
+            console.log('🔧 Auto-fixing localhost API URL to production URL');
+            localStorage.removeItem("apiBase");
+            return defaultUrl;
+        }
+        
+        return finalUrl;
+    });
     const [jwt, setJwt] = useState(() => localStorage.getItem("jwt") || "");
     
     // Get authentication state
@@ -51,11 +65,19 @@ export default function HarvestPlannerPage() {
         userToken: userToken ? `${userToken.substring(0, 20)}...` : 'null',
         jwt: jwt ? `${jwt.substring(0, 20)}...` : 'null',
         authToken: authToken ? `${authToken.substring(0, 20)}...` : 'null',
+        apiBase: apiBase,
         zohoAuth,
         userAuth,
         isAuthenticated,
         authLoading
     });
+    
+    // Helper function to clear localStorage and reset API URL
+    window.resetApiUrl = () => {
+        localStorage.removeItem("apiBase");
+        console.log('✅ API URL reset to default. Refresh the page to apply changes.');
+        window.location.reload();
+    };
     
     const api = useMemo(() => makeApi(apiBase, authToken), [apiBase, authToken]);
     const svc = useMemo(() => HarvestPlansApi(api), [api]);
@@ -141,6 +163,32 @@ export default function HarvestPlannerPage() {
         setDateFrom(startDate);
         setDateTo(endDate);
     };
+
+    const handlePlanUpdate = (planId, updates) => {
+        setRows(prev => prev.map(plan => 
+            String(plan.id) === String(planId) 
+                ? { 
+                    ...plan, 
+                    ...updates,
+                    // Map run_date back to date for harvest plans
+                    date: updates.run_date || updates.date || plan.date
+                  }
+                : plan
+        ));
+    };
+
+    const handleSuccess = (message, shouldReload = false) => {
+        if (message) {
+            setToast(message);
+        }
+        if (shouldReload) {
+            load();
+        }
+    };
+
+    const handleError = (message) => {
+        setToast(message);
+    };
     // Only load data when authenticated and not loading
     useEffect(() => { 
         if (isAuthenticated && !authLoading) {
@@ -155,8 +203,8 @@ export default function HarvestPlannerPage() {
         }
     }, [isAuthenticated, authLoading]);
 
-// client-side filter by date range (inclusive)
-const filtered = rows.filter(r => {
+// client-side filter by date range (inclusive) for table view
+const filteredTablePlans = rows.filter(r => {
     if (!r.date) return false;
     const planDate = new Date(r.date);
     const planDateOnly = new Date(planDate.getFullYear(), planDate.getMonth(), planDate.getDate());
@@ -171,6 +219,57 @@ const filtered = rows.filter(r => {
     }
     return true;
 }).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+// Helper functions for week calculations (Sunday start)
+const startOfWeekFunc = (date) => {
+    const d = new Date(date);
+    const day = d.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const diff = d.getDate() - day; // Sunday start
+    return new Date(d.setDate(diff));
+};
+
+const addDays = (date, days) => {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+};
+
+const getWeekRange = (weekStartDate) => {
+    const start = startOfWeekFunc(weekStartDate);
+    const end = addDays(start, 6);
+    return { start, end };
+};
+
+// Separate filtering for weekly view (uses week range)
+const filteredWeeklyPlans = (() => {
+    const weekRange = getWeekRange(weekStart);
+    const fromDate = weekRange.start;
+    const toDate = weekRange.end;
+    
+    const filtered = rows.filter(plan => {
+        if (!plan.date) return false;
+        const planDate = new Date(plan.date);
+        const planDateOnly = new Date(planDate.getFullYear(), planDate.getMonth(), planDate.getDate());
+        
+        if (fromDate) {
+            const fromDateOnly = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
+            if (planDateOnly < fromDateOnly) return false;
+        }
+        if (toDate) {
+            const toDateOnly = new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate());
+            if (planDateOnly > toDateOnly) return false;
+        }
+        return true;
+    }).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    
+    // Transform harvest plans to look like process plans for WeeklyProcessBoard
+    return filtered.map(plan => ({
+        ...plan,
+        run_date: plan.date, // Map date to run_date
+        gablockidx: plan.grower_block_id,
+        row_order: 0 // Harvest plans don't have row_order
+    }));
+})();
 
     // Show loading state while waiting for authentication
     if (authLoading) {
@@ -346,7 +445,7 @@ const filtered = rows.filter(r => {
         {effectiveView === "table" ? (
             <Paper elevation={0} sx={{ bgcolor: 'background.paper', border: '1px solid #E8EBF0', borderRadius: 2 }}>
                 <HarvestPlansTable
-                    plans={filtered}
+                    plans={filteredTablePlans}
                     blocks={blocks}
                     commodities={commodities}
                     contractors={contractors}
@@ -355,17 +454,19 @@ const filtered = rows.filter(r => {
                 />
             </Paper>
         ) : (
-            <WeeklyPlannerBoard
-                plans={rows}
+            <WeeklyProcessBoard
+                processPlans={filteredWeeklyPlans}
                 blocks={blocks}
+                pools={pools}
                 contractors={contractors}
                 commodities={commodities}
                 onEdit={(row) => {setEditRow(row); setDialogOpen(true);}}
-                onView={(row) => {setViewRow(row); setViewDialogOpen(true);}}
-                svc={svc}
+                onSuccess={handleSuccess}
+                onError={handleError}
                 weekStart={weekStart}
-                onWeekChange={setWeekStart}
-                onReload={load}
+                onProcessPlanUpdate={handlePlanUpdate}
+                apiService={svc}
+                fieldMapping={{ dateField: 'date', hasRowOrder: false }}
             />
         )}
     </Container>

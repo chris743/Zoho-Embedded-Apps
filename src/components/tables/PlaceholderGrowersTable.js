@@ -54,7 +54,19 @@ export function PlaceholderGrowersTable() {
   const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   // API setup - following exact same pattern as HarvestPlannerPage
-  const [apiBase, setApiBase] = useState(() => localStorage.getItem("apiBase") || "http://localhost:5048/api/v1");
+  const [apiBase, setApiBase] = useState(() => {
+    const stored = localStorage.getItem("apiBase");
+    const defaultUrl = "https://api.cobblestonecloud.com/api/v1";
+    
+    // Auto-fix: If stored URL contains localhost, clear it and use the correct URL
+    if (stored && (stored.includes('localhost') || stored.includes('5048'))) {
+      console.log('🔧 Auto-fixing localhost API URL to production URL');
+      localStorage.removeItem("apiBase");
+      return defaultUrl;
+    }
+    
+    return stored || defaultUrl;
+  });
   const [jwt, setJwt] = useState(() => localStorage.getItem("jwt") || "");
   
   // Get authentication state
