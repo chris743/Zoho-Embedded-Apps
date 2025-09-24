@@ -293,11 +293,22 @@ export function Sidebar({ mobileOpen, onMobileToggle, isMobile }) {
                         minHeight: 64,
                     }}
                 >
-                    {!collapsed && (
-                        <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                            Cobblestone
-                        </Typography>
-                    )}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: collapsed ? 0 : 1 }}>
+                        <img 
+                            src="/logo_emblem.png" 
+                            alt="Cobblestone" 
+                            style={{ 
+                                width: collapsed ? '32px' : '28px', 
+                                height: collapsed ? '32px' : '28px',
+                                objectFit: 'contain'
+                            }} 
+                        />
+                        {!collapsed && (
+                            <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                                Cobblestone
+                            </Typography>
+                        )}
+                    </Box>
                     {!collapsed && (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <ViewModeToggle />

@@ -16,8 +16,7 @@ import {
     Visibility,
     VisibilityOff,
     Person as PersonIcon,
-    Lock as LockIcon,
-    Business as BusinessIcon
+    Lock as LockIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -78,7 +77,7 @@ export function LoginForm() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'grey.50',
+                backgroundColor: 'background.default',
                 p: 3
             }}
         >
@@ -95,23 +94,17 @@ export function LoginForm() {
             >
                 {/* Header */}
                 <Box sx={{ textAlign: 'center', mb: 4 }}>
-                    <Box
-                        sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 64,
-                            height: 64,
-                            borderRadius: 2,
-                            backgroundColor: 'primary.main',
-                            mb: 2
-                        }}
-                    >
-                        <BusinessIcon sx={{ fontSize: 32, color: 'white' }} />
+                    <Box sx={{ mb: 2 }}>
+                        <img 
+                            src="/logo_text.png" 
+                            alt="Cobblestone" 
+                            style={{ 
+                                width: '156px', 
+                                height: '156px',
+                                objectFit: 'contain'
+                            }} 
+                        />
                     </Box>
-                    <Typography variant="h4" fontWeight={600} gutterBottom>
-                        Cobblestone
-                    </Typography>
                     <Typography variant="body2" color="text.secondary">
                         Sign in to your account
                     </Typography>

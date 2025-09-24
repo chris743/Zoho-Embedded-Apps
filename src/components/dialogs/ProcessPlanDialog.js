@@ -412,15 +412,6 @@ export function ProcessPlanDialog({
                                 />
                             </Grid>
 
-                            {/* Assignment Fields - Row 3 */}
-                            <Grid item xs={12} sm={6}>
-                                <PoolSelector
-                                    pools={pools}
-                                    value={formData.pool}
-                                    onChange={(poolId) => setFormData(prev => ({ ...prev, pool: poolId }))}
-                                />
-                            </Grid>
-
                             {/* Additional Info - Row 4 */}
                             <Grid item xs={12} sm={6}>
                                 <TextField
@@ -443,9 +434,17 @@ export function ProcessPlanDialog({
                                     placeholder="Optional batch identifier"
                                 />
                             </Grid>
+                            {/* Pool Assignment - 20% width */}
+                            <Grid item xs={12} sm={2} sx={{width: '20%'}}>
+                                <PoolSelector
+                                    pools={pools}
+                                    value={formData.pool}
+                                    onChange={(poolId) => setFormData(prev => ({ ...prev, pool: poolId }))}
+                                />
+                            </Grid>
 
-                            {/* Notes - Full Width */}
-                            <Grid item xs={12}>
+                            {/* Notes - Full Width on Separate Line */}
+                            <Grid item xs={12} width="100%">
                                 <TextField
                                     fullWidth
                                     label="Notes"

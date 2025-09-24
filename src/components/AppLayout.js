@@ -27,7 +27,7 @@ export function AppLayout({ children }) {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    backgroundColor: theme.palette.grey[50],
+                    backgroundColor: theme.palette.background.default,
                     minHeight: '100vh',
                     transition: theme.transitions.create('margin', {
                         easing: theme.transitions.easing.sharp,

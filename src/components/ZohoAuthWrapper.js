@@ -46,44 +46,7 @@ function AuthWrapper({ children }) {
 
     // If we have any authentication, proceed with the app
     if (zohoAuth || userAuth) {
-        return (
-            <Box>
-                {/* Optional: Show user info banner */}
-                {zohoUser && (
-                    <Box 
-                        sx={{ 
-                            bgcolor: 'success.light', 
-                            color: 'success.contrastText',
-                            p: 1, 
-                            textAlign: 'center',
-                            fontSize: '0.875rem'
-                        }}
-                    >
-                        <Typography variant="body2">
-                            Welcome, {zohoUser.full_name || zohoUser.email} | 
-                            Session Key Authentication Active
-                        </Typography>
-                    </Box>
-                )}
-                {authUser && !zohoUser && (
-                    <Box 
-                        sx={{ 
-                            bgcolor: 'info.light', 
-                            color: 'info.contrastText',
-                            p: 1, 
-                            textAlign: 'center',
-                            fontSize: '0.875rem'
-                        }}
-                    >
-                        <Typography variant="body2">
-                            Welcome, {authUser.username || authUser.email} | 
-                            Backend Authentication Active
-                        </Typography>
-                    </Box>
-                )}
-                {children}
-            </Box>
-        );
+        return <>{children}</>;
     }
 
     // Show login form for external users

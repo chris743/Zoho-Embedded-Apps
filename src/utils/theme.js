@@ -3,9 +3,9 @@ import { createTheme } from '@mui/material/styles';
 // Zoho-inspired color palette
 export const ZohoColors = {
   primary: {
-    main: '#4285F4', // Zoho blue
+    main: '#1E4B32', // Cobblestone green
     light: '#6FA3FF',
-    dark: '#2E5BCF',
+    dark: '#153826',
     contrastText: '#FFFFFF',
   },
   secondary: {
