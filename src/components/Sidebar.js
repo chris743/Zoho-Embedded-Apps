@@ -65,7 +65,6 @@ const menuItems = [
                 id: 'users',
                 label: 'User Management',
                 path: '/users',
-                requiresRole: ['admin']
             },
             {
                 id: 'placeholder-growers',
