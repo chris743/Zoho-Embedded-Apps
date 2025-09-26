@@ -39,6 +39,7 @@ const exportToCSV = (data, filename = "harvest-plans") => {
             Commodity: row.commodityName || "-",
             Grower: row.grower_name || "-",
             Block: row.block_name || "-",
+            "Pool ID": row.pool_id || "-",
             Bins: row.bins ?? row.planned_bins ?? 0,
             Labor: row.laborContractorName || "-",
             Forklift: row.forkliftContractorName || "-",
@@ -72,6 +73,7 @@ const exportToCSV = (data, filename = "harvest-plans") => {
                     Commodity: `${currentCommodity} Total (${total.count} plans)`,
                     Grower: "",
                     Block: "",
+                    "Pool ID": "",
                     Bins: total.totalBins,
                     Labor: "",
                     Forklift: "",
@@ -93,6 +95,7 @@ const exportToCSV = (data, filename = "harvest-plans") => {
             Commodity: `${currentCommodity} Total (${total.count} plans)`,
             Grower: "",
             Block: "",
+            "Pool ID": "",
             Bins: total.totalBins,
             Labor: "",
             Forklift: "",
@@ -127,6 +130,7 @@ const exportToPDF = (data, filename = "harvest-plans") => {
             Commodity: row.commodityName || "-",
             Grower: row.grower_name || "-",
             Block: row.block_name || "-",
+            "Pool ID": row.pool_id || "-",
             Bins: row.bins ?? row.planned_bins ?? 0,
             Labor: row.laborContractorName || "-",
             Forklift: row.forkliftContractorName || "-",
@@ -160,6 +164,7 @@ const exportToPDF = (data, filename = "harvest-plans") => {
                     `${currentCommodity} Total (${total.count} plans)`,
                     "",
                     "",
+                    "", // Pool ID
                     total.totalBins.toString(),
                     "",
                     "",
@@ -175,6 +180,7 @@ const exportToPDF = (data, filename = "harvest-plans") => {
             row.Commodity,
             row.Grower,
             row.Block,
+            row["Pool ID"],
             row.Bins.toString(),
             row.Labor,
             row.Forklift,
@@ -192,6 +198,7 @@ const exportToPDF = (data, filename = "harvest-plans") => {
             `${currentCommodity} Total (${total.count} plans)`,
             "",
             "",
+            "", // Pool ID
             total.totalBins.toString(),
             "",
             "",
@@ -204,20 +211,25 @@ const exportToPDF = (data, filename = "harvest-plans") => {
     // Create PDF
     const doc = new jsPDF('landscape', 'pt', 'a4');
     
-    // Add title
-    doc.setFontSize(18);
+    // Add title with improved styling
+    doc.setFontSize(22);
     doc.setFont(undefined, 'bold');
-    doc.text('Harvest Plans Report', 40, 40);
+    doc.setTextColor(30, 75, 50); // Green color
+    doc.text('Harvest Plans Report', 40, 45);
     
     // Add date
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     doc.setFont(undefined, 'normal');
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 40, 60);
+    doc.setTextColor(105, 123, 127); // Medium gray
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 40, 65);
     
-    // Add summary
+    // Add summary with better styling
     const totalPlans = exportData.length;
     const totalBins = exportData.reduce((sum, row) => sum + row.Bins, 0);
-    doc.text(`Total Plans: ${totalPlans} | Total Bins: ${totalBins}`, 40, 80);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(255, 107, 53); // Orange accent
+    doc.setFontSize(12);
+    doc.text(`Total Plans: ${totalPlans} | Total Bins: ${totalBins}`, 40, 85);
 
     // Define table columns
     const columns = [
@@ -225,6 +237,7 @@ const exportToPDF = (data, filename = "harvest-plans") => {
         { header: 'Commodity', dataKey: 'Commodity' },
         { header: 'Grower', dataKey: 'Grower' },
         { header: 'Block', dataKey: 'Block' },
+        { header: 'Pool ID', dataKey: 'Pool ID' },
         { header: 'Bins', dataKey: 'Bins' },
         { header: 'Labor', dataKey: 'Labor' },
         { header: 'Forklift', dataKey: 'Forklift' },
@@ -233,36 +246,44 @@ const exportToPDF = (data, filename = "harvest-plans") => {
         { header: 'Field Rep', dataKey: 'Field Rep' }
     ];
 
+    // Reset text color for table content
+    doc.setTextColor(0, 0, 0);
+    
     // Generate table
     autoTable(doc, {
         columns: columns,
         body: finalExportData,
-        startY: 100,
+        startY: 105, // Adjusted for better spacing
         styles: {
-            fontSize: 8,
-            cellPadding: 3,
+            fontSize: 9,
+            cellPadding: 4,
             overflow: 'linebreak',
-            halign: 'left'
+            halign: 'left',
+            lineColor: [230, 230, 230],
+            lineWidth: 0.3
         },
         headStyles: {
-            fillColor: [66, 139, 202],
-            textColor: 255,
+            fillColor: [30, 75, 50], // Green theme color (#1E4B32)
+            textColor: [255, 255, 255], // White text
             fontStyle: 'bold',
-            fontSize: 9
+            fontSize: 10,
+            lineWidth: 0.1
         },
         alternateRowStyles: {
-            fillColor: [245, 245, 245]
+            fillColor: [248, 249, 251] // Off-white for better readability
         },
         didDrawCell: (data) => {
             // Style total rows
             if (data.row.raw[1] && data.row.raw[1].includes('Total')) {
                 if (data.column.dataKey === 'Commodity') {
                     data.cell.styles.fontStyle = 'bold';
-                    data.cell.styles.fillColor = [200, 200, 200];
+                    data.cell.styles.fillColor = [255, 107, 53]; // Orange accent (#FF6B35)
+                    data.cell.styles.textColor = [255, 255, 255]; // White text
                 }
                 if (data.column.dataKey === 'Bins') {
                     data.cell.styles.fontStyle = 'bold';
-                    data.cell.styles.fillColor = [200, 200, 200];
+                    data.cell.styles.fillColor = [255, 107, 53]; // Orange accent (#FF6B35)
+                    data.cell.styles.textColor = [255, 255, 255]; // White text
                 }
             }
         },
