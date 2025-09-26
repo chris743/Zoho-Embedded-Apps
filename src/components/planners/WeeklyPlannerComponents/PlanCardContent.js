@@ -2,6 +2,7 @@ import { Button, Stack } from "@mui/material";
 import { PlanTitle } from "./PlanTitle";
 import { PlanDetails } from "./PlanDetails";
 import { ContractorInfo } from "./ContractorInfo";
+import { FieldRepresentativeInfo } from "./FieldRepresentativeInfo";
 import { memo } from "react";
 
 export const PlanCardContent = memo(({ plan, editClick, viewClick }) => {
@@ -19,6 +20,9 @@ export const PlanCardContent = memo(({ plan, editClick, viewClick }) => {
       />
       {_card.contractorName && (
         <ContractorInfo name={_card.contractorName} />
+      )}
+      {_card.fieldRepresentativeName && (
+        <FieldRepresentativeInfo name={_card.fieldRepresentativeName} />
       )}
         <Stack direction="row" spacing = '0.8rem' sx={{justifyContent: "center"}}>
             <Button onClick={editClick} size="small" variant="outlined" color="secondary">Edit</Button>

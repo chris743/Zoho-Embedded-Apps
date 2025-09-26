@@ -44,6 +44,7 @@ public HarvestPlansController(AppDbContext db) => _db = db;
         x.packed_by,
         x.date,
         x.bins,
+        x.field_representative_id,
         x.Block != null ? new BlockDto(
             x.Block.id,
             x.Block.name,
@@ -71,7 +72,7 @@ public async Task<ActionResult<HarvestPlanDto>> Get(Guid id, CancellationToken c
 {
 var x = await _db.HarvestPlans.AsNoTracking().FirstOrDefaultAsync(p => p.id == id, ct);
 if (x is null) return NotFound();
-return new HarvestPlanDto(x.id, x.grower_block_source_database, x.grower_block_id, x.planned_bins, x.contractor_id, x.harvesting_rate, x.hauler_id, x.hauling_rate, x.forklift_contractor_id, x.forklift_rate, x.pool_id, x.notes_general, x.deliver_to, x.packed_by, x.date, x.bins,
+return new HarvestPlanDto(x.id, x.grower_block_source_database, x.grower_block_id, x.planned_bins, x.contractor_id, x.harvesting_rate, x.hauler_id, x.hauling_rate, x.forklift_contractor_id, x.forklift_rate, x.pool_id, x.notes_general, x.deliver_to, x.packed_by, x.date, x.bins, x.field_representative_id,
     x.Block != null ? new BlockDto(
         x.Block.id,
         x.Block.name,
@@ -115,7 +116,8 @@ return new HarvestPlanDto(x.id, x.grower_block_source_database, x.grower_block_i
             deliver_to = input.deliver_to,
             packed_by = input.packed_by,
             date = input.date,
-            bins = input.bins
+            bins = input.bins,
+            field_representative_id = input.field_representative_id
         };
 
 
@@ -123,7 +125,7 @@ return new HarvestPlanDto(x.id, x.grower_block_source_database, x.grower_block_i
         await _db.SaveChangesAsync(ct);
 
 
-        var dto = new HarvestPlanDto(entity.id, entity.grower_block_source_database, entity.grower_block_id, entity.planned_bins, entity.contractor_id, entity.harvesting_rate, entity.hauler_id, entity.hauling_rate, entity.forklift_contractor_id, entity.forklift_rate, entity.pool_id, entity.notes_general, entity.deliver_to, entity.packed_by, entity.date, entity.bins);
+        var dto = new HarvestPlanDto(entity.id, entity.grower_block_source_database, entity.grower_block_id, entity.planned_bins, entity.contractor_id, entity.harvesting_rate, entity.hauler_id, entity.hauling_rate, entity.forklift_contractor_id, entity.forklift_rate, entity.pool_id, entity.notes_general, entity.deliver_to, entity.packed_by, entity.date, entity.bins, entity.field_representative_id);
         return CreatedAtAction(nameof(Get), new { id = entity.id, version = "1" }, dto);
     }
 // PUT: /api/v1/HarvestPlans/{id}
@@ -151,6 +153,7 @@ x.deliver_to = input.deliver_to ?? x.deliver_to;
 x.packed_by = input.packed_by ?? x.packed_by;
 x.date = input.date ?? x.date;
 x.bins = input.bins ?? x.bins;
+x.field_representative_id = input.field_representative_id ?? x.field_representative_id;
 
 
 await _db.SaveChangesAsync(ct);

@@ -11,6 +11,7 @@ export function WeeklyPlannerBoard({
   blocks = [],
   contractors = [],
   commodities = [],
+  fieldRepresentatives = [],
   onEdit,
   onView,
   svc,
@@ -32,11 +33,20 @@ export function WeeklyPlannerBoard({
   const dayKeys = useMemo(() => days.map(toYMD), [days]);
 
   // Stable lookup maps
-  const lookupMaps = useMemo(() => ({
-    blocks: createBlockMap(blocks),
-    contractors: createContractorMap(contractors),
-    commodities: createCommodityMap(commodities)
-  }), [blocks, contractors, commodities]);
+  const lookupMaps = useMemo(() => {
+    const fieldRepMap = new Map();
+    for (const fr of fieldRepresentatives || []) {
+      if (fr.id != null) {
+        fieldRepMap.set(fr.id, fr);
+      }
+    }
+    return {
+      blocks: createBlockMap(blocks),
+      contractors: createContractorMap(contractors),
+      commodities: createCommodityMap(commodities),
+      fieldRepresentatives: fieldRepMap
+    };
+  }, [blocks, contractors, commodities, fieldRepresentatives]);
 
   // State management
   const [buckets, setBuckets] = useState({});

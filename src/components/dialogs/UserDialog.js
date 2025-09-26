@@ -33,7 +33,8 @@ const USER_ROLES = [
     { value: 'admin', label: 'Administrator', color: 'error' },
     { value: 'manager', label: 'Manager', color: 'warning' },
     { value: 'user', label: 'User', color: 'primary' },
-    { value: 'readonly', label: 'Read Only', color: 'default' }
+    { value: 'readonly', label: 'Read Only', color: 'default' },
+    { value: 'fieldrep', label: 'Field Representative', color: 'success' }
 ];
 
 export function UserDialog({ open, onClose, user, isEdit, onSuccess }) {

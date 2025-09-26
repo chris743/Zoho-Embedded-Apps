@@ -27,4 +27,7 @@ public int? bins { get; set; } // int
 // Placeholder grower reference
 public Guid? placeholder_grower_id { get; set; } // uniqueidentifier (FK to PlaceholderGrower)
 public PlaceholderGrower? placeholder_grower { get; set; } // Navigation property
+
+// Field representative reference
+public Guid? field_representative_id { get; set; } // uniqueidentifier (FK to user with 'fieldrep' role)
 }

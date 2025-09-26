@@ -3,6 +3,7 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextF
 import { BlockSelector } from "../forms/fields/BlockSelector"
 import { PoolSelector } from "../forms/fields/PoolSelector";
 import { PlaceholderGrowerSelector } from "../forms/fields/PlaceholderGrowerSelector";
+import { FieldRepresentativeSelector } from "../forms/fields/FieldRepresentativeSelector";
 import ContractorRolePicker from "../forms/fields/ContractorSelector";
 
 export default function PlannerDialog({ open, initial, onClose, onSaved, svc, blocks = [], pools = [], contractors=[], commodities=[]}) {
@@ -25,7 +26,9 @@ export default function PlannerDialog({ open, initial, onClose, onSaved, svc, bl
         use_placeholder_grower: false,
         placeholder_grower_id: null,
         placeholder_grower_name: "",
-        placeholder_commodity_name: ""
+        placeholder_commodity_name: "",
+        field_representative_id: null,
+        field_representative: null
     };
     const [model, setModel] = useState(empty);
     const isEdit = !!initial;
@@ -148,6 +151,14 @@ export default function PlannerDialog({ open, initial, onClose, onSaved, svc, bl
                                     setModel({ ...model, pool_id: nextId })
                                 }
                                 />
+                            <FieldRepresentativeSelector
+                                value={model.field_representative}
+                                onChange={(fieldRep) => setModel({ 
+                                    ...model, 
+                                    field_representative: fieldRep,
+                                    field_representative_id: fieldRep?.id || null
+                                })}
+                            />
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                                 <TextField label="Planned Bins" type="number" value={model.planned_bins ?? ''} onChange={(e) => setModel({ ...model, planned_bins: toNullableInt(e.target.value) })} />
                             </Stack>
@@ -254,7 +265,9 @@ function normalize(x) {
         use_placeholder_grower: isPlaceholder,
         placeholder_grower_id: x.placeholder_grower_id ?? null,
         placeholder_grower_name: placeholderGrowerName,
-        placeholder_commodity_name: placeholderCommodityName
+        placeholder_commodity_name: placeholderCommodityName,
+        field_representative_id: x.field_representative_id ?? null,
+        field_representative: null // Will be populated from field representative ID if needed
     };
 }
 function toDto(m) {
@@ -289,7 +302,8 @@ function toDto(m) {
         deliver_to: m.deliver_to || null,
         packed_by: m.packed_by || null,
         date: m.date ? new Date(m.date).toISOString() : null,
-        bins: m.bins ?? null
+        bins: m.bins ?? null,
+        field_representative_id: m.field_representative_id ?? null
     };
 }
 function toNullableInt(v) {

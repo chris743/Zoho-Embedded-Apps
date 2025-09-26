@@ -65,8 +65,9 @@ export function createCommodityMap(commodities) {
 }
 
 // Plan enrichment utilities - updated for new data structure
-export function enrichPlan(plan, { contractors }) {
+export function enrichPlan(plan, { contractors, fieldRepresentatives = new Map() }) {
     const contractor = contractors.get(plan.contractor_id ?? -1);
+    const fieldRep = fieldRepresentatives.get(plan.field_representative_id);
     const block = plan.block;
     const commodity = plan.commodity;
 
@@ -82,6 +83,7 @@ export function enrichPlan(plan, { contractors }) {
             commodityName: commodity?.commodity || commodity?.invoiceCommodity || "",
             commodityIdx: null, // No longer needed with new structure
             contractorName: contractor?.name ?? contractor?.NAME ?? "",
+            fieldRepresentativeName: fieldRep?.fullName || fieldRep?.full_name || fieldRep?.username || "",
             block: block, // Include full block object for additional data access
         }
     };
@@ -124,7 +126,10 @@ export function buildBuckets(plans, dayKeys, lookupMaps) {
     for (const plan of plans || []) {
         const ymd = toYMD(plan.date);
         if (buckets[ymd]) {
-            buckets[ymd].push(enrichPlan(plan, { contractors: lookupMaps.contractors }));
+            buckets[ymd].push(enrichPlan(plan, { 
+                contractors: lookupMaps.contractors,
+                fieldRepresentatives: lookupMaps.fieldRepresentatives || new Map()
+            }));
         }
     }
 

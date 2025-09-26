@@ -99,16 +99,9 @@ export const AuthProvider = ({ children }) => {
             setLoading(true);
             const response = await authApi.login(credentials);
             
-            console.log('🔍 Login response:', response);
-            console.log('🔍 Response data:', response.data);
-            console.log('🔍 Response data keys:', Object.keys(response.data || {}));
-            
             // Try different possible response structures
             const newToken = response.data?.token || response.data?.accessToken || response.data?.access_token || response.data?.jwt;
             const userData = response.data?.user || response.data?.userData || response.data?.userInfo || { username: credentials.username };
-            
-            console.log('🔍 Extracted token:', newToken ? `${newToken.substring(0, 20)}...` : 'null');
-            console.log('🔍 Extracted user:', userData);
             
             if (!newToken) {
                 console.error('❌ No token found in response');

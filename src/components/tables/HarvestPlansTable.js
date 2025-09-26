@@ -43,7 +43,8 @@ const exportToCSV = (data, filename = "harvest-plans") => {
             Labor: row.laborContractorName || "-",
             Forklift: row.forkliftContractorName || "-",
             Hauler: row.truckingContractorName || "-",
-            "Deliver To": row.deliver_to || "-"
+            "Deliver To": row.deliver_to || "-",
+            "Field Rep": row.fieldRepresentativeName || "-"
         }));
 
     // Add commodity totals as separate rows
@@ -75,7 +76,8 @@ const exportToCSV = (data, filename = "harvest-plans") => {
                     Labor: "",
                     Forklift: "",
                     Hauler: "",
-                    "Deliver To": ""
+                    "Deliver To": "",
+                    "Field Rep": ""
                 });
             }
             currentCommodity = row.Commodity;
@@ -95,7 +97,8 @@ const exportToCSV = (data, filename = "harvest-plans") => {
             Labor: "",
             Forklift: "",
             Hauler: "",
-            "Deliver To": ""
+            "Deliver To": "",
+            "Field Rep": ""
         });
     }
 
@@ -128,7 +131,8 @@ const exportToPDF = (data, filename = "harvest-plans") => {
             Labor: row.laborContractorName || "-",
             Forklift: row.forkliftContractorName || "-",
             Hauler: row.truckingContractorName || "-",
-            "Deliver To": row.deliver_to || "-"
+            "Deliver To": row.deliver_to || "-",
+            "Field Rep": row.fieldRepresentativeName || "-"
         }));
 
     // Calculate commodity totals
@@ -160,6 +164,7 @@ const exportToPDF = (data, filename = "harvest-plans") => {
                     "",
                     "",
                     "",
+                    "",
                     ""
                 ]);
             }
@@ -174,7 +179,8 @@ const exportToPDF = (data, filename = "harvest-plans") => {
             row.Labor,
             row.Forklift,
             row.Hauler,
-            row["Deliver To"]
+            row["Deliver To"],
+            row["Field Rep"]
         ]);
     });
 
@@ -187,6 +193,7 @@ const exportToPDF = (data, filename = "harvest-plans") => {
             "",
             "",
             total.totalBins.toString(),
+            "",
             "",
             "",
             "",
@@ -222,7 +229,8 @@ const exportToPDF = (data, filename = "harvest-plans") => {
         { header: 'Labor', dataKey: 'Labor' },
         { header: 'Forklift', dataKey: 'Forklift' },
         { header: 'Hauler', dataKey: 'Hauler' },
-        { header: 'Deliver To', dataKey: 'Deliver To' }
+        { header: 'Deliver To', dataKey: 'Deliver To' },
+        { header: 'Field Rep', dataKey: 'Field Rep' }
     ];
 
     // Generate table
@@ -278,6 +286,7 @@ export function HarvestPlansTable({
     commodities = [],
     blocks = [],
     contractors = [],
+    fieldRepresentatives = [],
     onRowClick,
     onViewClick,
     dateTitle
@@ -296,11 +305,12 @@ export function HarvestPlansTable({
         contractor: "",
         forklift: "",
         hauler: "",
-        deliverTo: ""
+        deliverTo: "",
+        fieldRep: ""
     });
     const [showFilters, setShowFilters] = useState(false);
 
-    // Index helpers for contractors (still needed for contractor lookups)
+    // Index helpers for contractors and field representatives
     const contractorById = useMemo(() => {
         const m = new Map();
         for (const c of contractors || []) {
@@ -310,12 +320,22 @@ export function HarvestPlansTable({
         return m;
     }, [contractors]);
 
+    const fieldRepById = useMemo(() => {
+        const m = new Map();
+        for (const fr of fieldRepresentatives || []) {
+            const id = fr.id;
+            if (id != null) m.set(id, fr);
+        }
+        return m;
+    }, [fieldRepresentatives]);
+
     // Enrich plans for display using new data structure
     const data = useMemo(() => {
         return (plans || []).map((p) => {
             const labor = contractorById.get(p.contractor_id ?? -1);
             const forklift = contractorById.get(p.forklift_contractor_id ?? -1);
             const hauler = contractorById.get(p.hauler_id ?? -1);
+            const fieldRep = fieldRepById.get(p.field_representative_id);
 
             // Check if this is a placeholder grower
             const isPlaceholder = p.grower_block_source_database === "PLACEHOLDER" && p.grower_block_id === 999999;
@@ -350,10 +370,11 @@ export function HarvestPlansTable({
                 laborContractorName: labor?.name ?? labor?.NAME ?? "",
                 forkliftContractorName: forklift?.name ?? forklift?.NAME ?? "",
                 truckingContractorName: hauler?.name ?? hauler?.NAME ?? "",
+                fieldRepresentativeName: fieldRep?.fullName || fieldRep?.full_name || fieldRep?.username || "",
                 isPlaceholder
             };
         });
-    }, [plans, contractorById]);
+    }, [plans, contractorById, fieldRepById]);
     // Filter option sets
     const filterOptions = useMemo(() => {
         const o = {
@@ -363,6 +384,7 @@ export function HarvestPlansTable({
             forklift: new Set(),
             hauler: new Set(),
             deliverTo: new Set(),
+            fieldRep: new Set(),
         };
         for (const r of data) {
             if (r.commodityName) o.commodity.add(r.commodityName);
@@ -371,6 +393,7 @@ export function HarvestPlansTable({
             if (r.forkliftContractorName) o.forklift.add(r.forkliftContractorName);
             if (r.truckingContractorName) o.hauler.add(r.truckingContractorName);
             if (r.deliver_to) o.deliverTo.add(r.deliver_to);
+            if (r.fieldRepresentativeName) o.fieldRep.add(r.fieldRepresentativeName);
         }
         const sort = (s) => Array.from(s).sort((a, b) => String(a).localeCompare(String(b)));
         return {
@@ -380,6 +403,7 @@ export function HarvestPlansTable({
             forklift: sort(o.forklift),
             hauler: sort(o.hauler),
             deliverTo: sort(o.deliverTo),
+            fieldRep: sort(o.fieldRep),
         };
     }, [data]);
 
@@ -393,6 +417,7 @@ export function HarvestPlansTable({
             (filters.forklift === "" || r.forkliftContractorName === filters.forklift) &&
             (filters.hauler === "" || r.truckingContractorName === filters.hauler) &&
             (filters.deliverTo === "" || r.deliver_to === filters.deliverTo) &&
+            (filters.fieldRep === "" || r.fieldRepresentativeName === filters.fieldRep) &&
             (blkNeedle === "" || (r.block_name || "").toLowerCase().includes(blkNeedle))
         );
 
@@ -438,7 +463,7 @@ export function HarvestPlansTable({
         setFilters((prev) => ({ ...prev, [field]: value }));
 
     const clearAllFilters = () =>
-        setFilters({ commodity: "", grower: "", block: "", contractor: "", forklift: "", hauler: "", deliverTo: "" });
+        setFilters({ commodity: "", grower: "", block: "", contractor: "", forklift: "", hauler: "", deliverTo: "", fieldRep: "" });
 
     return (
         <Paper sx={{ width: "100%", overflow: "hidden" }}>
@@ -584,6 +609,17 @@ export function HarvestPlansTable({
                         >
                             <MenuItem value="">All</MenuItem>
                             {filterOptions.deliverTo.map((v) => <MenuItem key={v} value={v}>{v}</MenuItem>)}
+                        </Select>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 150 }}>
+                        <InputLabel>Field Rep</InputLabel>
+                        <Select
+                            value={filters.fieldRep}
+                            label="Field Rep"
+                            onChange={(e) => handleFilterChange("fieldRep", e.target.value)}
+                        >
+                            <MenuItem value="">All</MenuItem>
+                            {filterOptions.fieldRep.map((v) => <MenuItem key={v} value={v}>{v}</MenuItem>)}
                         </Select>
                     </FormControl>
                 </Box>
@@ -738,13 +774,14 @@ export function HarvestPlansTable({
                                 <TableCell sx={{ py: 0.5, fontWeight: 600, fontSize: '0.875rem' }}>Forklift</TableCell>
                                 <TableCell sx={{ py: 0.5, fontWeight: 600, fontSize: '0.875rem' }}>Hauler</TableCell>
                                 <TableCell sx={{ py: 0.5, fontWeight: 600, fontSize: '0.875rem' }}>Deliver To</TableCell>
+                                <TableCell sx={{ py: 0.5, fontWeight: 600, fontSize: '0.875rem' }}>Field Rep</TableCell>
                                 <TableCell sx={{ py: 0.5, fontWeight: 600, fontSize: '0.875rem' }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {groupedData.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={10} align="center">
+                                    <TableCell colSpan={11} align="center">
                                         <Typography color="text.secondary">No harvest plans match the selected filters</Typography>
                                     </TableCell>
                                 </TableRow>
@@ -785,6 +822,7 @@ export function HarvestPlansTable({
                                                 <TableCell sx={{ py: 0.5 }}></TableCell>
                                                 <TableCell sx={{ py: 0.5 }}></TableCell>
                                                 <TableCell sx={{ py: 0.5 }}></TableCell>
+                                                <TableCell sx={{ py: 0.5 }}></TableCell>
                                             </TableRow>
                                         );
                                     } else {
@@ -819,6 +857,7 @@ export function HarvestPlansTable({
                                                 <TableCell sx={{ py: 0.5 }}>{row.forkliftContractorName || "-"}</TableCell>
                                                 <TableCell sx={{ py: 0.5 }}>{row.truckingContractorName || "-"}</TableCell>
                                                 <TableCell sx={{ py: 0.5 }}>{row.deliver_to || "-"}</TableCell>
+                                                <TableCell sx={{ py: 0.5 }}>{row.fieldRepresentativeName || "-"}</TableCell>
                                                 <TableCell sx={{ py: 0.5 }}>
                                                     <Box sx={{ display: 'flex', gap: 0.5 }}>
                                                         <Tooltip title="Edit">

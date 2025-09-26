@@ -15,6 +15,7 @@ import { PoolsApi } from "../api/pools"
 import { ContractorsApi } from "../api/contractors";
 import { CommoditiesApi } from "../api/commodities";
 import { ScoutReportsApi } from "../api/scoutReports";
+import { UsersApi } from "../api/auth";
 import { WeeklyProcessBoard } from "../components/planners/processPlanner/WeeklyProcessBoard";
 import { WeekPicker } from "../components/WeekPicker";
 import { DateRangePicker } from "../components/DateRangePicker";
@@ -86,6 +87,7 @@ export default function HarvestPlannerPage() {
     const contractorSvc = useMemo(() => ContractorsApi(api), [api]);
     const commoditiesSvc = useMemo(() => CommoditiesApi(api), [api]);
     const scoutReportsSvc = useMemo(() => ScoutReportsApi(api), [api]);
+    const usersSvc = useMemo(() => UsersApi(api), [api]);
 
 
     const [toast, setToast] = useState(null);
@@ -102,6 +104,7 @@ export default function HarvestPlannerPage() {
     const [contractors, setContractors] = useState([]);
     const [pools, setPools] = useState([]);
     const [commodities, setCommodities] = useState(null);
+    const [fieldRepresentatives, setFieldRepresentatives] = useState([]);
 
     // Force table view on mobile, otherwise allow user choice
     const [view, setView] = useState("table");
@@ -147,6 +150,15 @@ export default function HarvestPlannerPage() {
             
             console.log(arr)
         } catch (err) { console.warn("commodities load failed", err); }
+    };
+
+    const loadFieldRepresentatives = async () => {
+        try {
+            const { data } = await usersSvc.list({ take: 10000 });
+            const arr = Array.isArray(data) ? data : (data?.items || data?.values || data?.$values);
+            const fieldReps = arr.filter(user => user.role === 'fieldrep');
+            setFieldRepresentatives(fieldReps);
+        } catch (err) { console.warn("Field representatives load failed", err); }
     };
     
     const load = async () => {
@@ -198,6 +210,7 @@ export default function HarvestPlannerPage() {
             loadPools(); 
             loadContractors(); 
             loadCommodities();
+            loadFieldRepresentatives();
         } else {
             console.log('⏳ Waiting for authentication - authenticated:', isAuthenticated, 'loading:', authLoading);
         }
@@ -449,6 +462,7 @@ const filteredWeeklyPlans = (() => {
                     blocks={blocks}
                     commodities={commodities}
                     contractors={contractors}
+                    fieldRepresentatives={fieldRepresentatives}
                     onRowClick={(row) => { setEditRow(row); setDialogOpen(true); }}
                     onViewClick={(row) => { setViewRow(row); setViewDialogOpen(true); }}
                 />

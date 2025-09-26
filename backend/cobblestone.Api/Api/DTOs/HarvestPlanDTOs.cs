@@ -20,7 +20,8 @@ public record HarvestPlanCreateDto(
     string? deliver_to,
     string? packed_by,
     DateTime? date,
-    int? bins
+    int? bins,
+    Guid? field_representative_id
 );
 
 
@@ -39,7 +40,8 @@ public record HarvestPlanUpdateDto(
     string? deliver_to,
     string? packed_by,
     DateTime? date,
-    int? bins
+    int? bins,
+    Guid? field_representative_id
 );
 public record HarvestPlanDto(
     Guid id,
@@ -57,5 +59,6 @@ public record HarvestPlanDto(
     string? deliver_to,
     string? packed_by,
     DateTime? date,
-    int?   bins
+    int?   bins,
+    Guid? field_representative_id
 );
