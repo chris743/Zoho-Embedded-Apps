@@ -39,7 +39,7 @@ const exportToCSV = (data, filename = "harvest-plans") => {
             Commodity: row.commodityName || "-",
             Grower: row.grower_name || "-",
             Block: row.block_name || "-",
-            "Pool ID": row.pool_id || "-",
+            "Pool ID": row.pool?.id || "-",
             Bins: row.bins ?? row.planned_bins ?? 0,
             Labor: row.laborContractorName || "-",
             Forklift: row.forkliftContractorName || "-",
@@ -123,6 +123,7 @@ const exportToCSV = (data, filename = "harvest-plans") => {
 // PDF export function for filtered data
 const exportToPDF = (data, filename = "harvest-plans") => {
     // Filter out total rows and prepare data for export
+    console.log(data);
     const exportData = data
         .filter(row => !row.isTotal) // Remove total rows
         .map(row => ({
@@ -130,7 +131,7 @@ const exportToPDF = (data, filename = "harvest-plans") => {
             Commodity: row.commodityName || "-",
             Grower: row.grower_name || "-",
             Block: row.block_name || "-",
-            "Pool ID": row.pool_id || "-",
+            "Pool ID": row.pool?.id || "-",
             Bins: row.bins ?? row.planned_bins ?? 0,
             Labor: row.laborContractorName || "-",
             Forklift: row.forkliftContractorName || "-",
