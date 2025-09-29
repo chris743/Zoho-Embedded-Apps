@@ -38,7 +38,7 @@ const exportToCSV = (data, filename = "harvest-plans") => {
             Date: formatDate(row.date),
             Commodity: row.commodityName || "-",
             Grower: row.grower_name || "-",
-            Block: row.block_name || "-",
+            Block: row.block_display || "-",
             "Pool ID": row.pool?.id || "-",
             Bins: row.bins ?? row.planned_bins ?? 0,
             Labor: row.laborContractorName || "-",
@@ -130,7 +130,7 @@ const exportToPDF = (data, filename = "harvest-plans") => {
             Date: formatDate(row.date),
             Commodity: row.commodityName || "-",
             Grower: row.grower_name || "-",
-            Block: row.block_name || "-",
+            Block: row.block_display || "-",
             "Pool ID": row.pool?.id || "-",
             Bins: row.bins ?? row.planned_bins ?? 0,
             Labor: row.laborContractorName || "-",
@@ -384,11 +384,17 @@ export function HarvestPlansTable({
                 commodityName = p.commodity?.commodity || p.commodity?.invoiceCommodity || "";
             }
 
+            // Create a combined block identifier with ID at the front
+            const block_id = p.block?.id || "";
+            const block_display = block_id ? `${block_id} - ${block_name}` : block_name;
+
             return {
                 ...p,
                 commodityName,
                 grower_name,
                 block_name,
+                block_id,
+                block_display,
                 laborContractorName: labor?.name ?? labor?.NAME ?? "",
                 forkliftContractorName: forklift?.name ?? forklift?.NAME ?? "",
                 truckingContractorName: hauler?.name ?? hauler?.NAME ?? "",
@@ -749,7 +755,7 @@ export function HarvestPlansTable({
                                                 </Box>
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                                     <Typography variant="body2" color="text.secondary">Block:</Typography>
-                                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>{row.block_name || "-"}</Typography>
+                                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>{row.block_display || "-"}</Typography>
                                                 </Box>
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                                     <Typography variant="body2" color="text.secondary">Bins:</Typography>
@@ -873,7 +879,7 @@ export function HarvestPlansTable({
                                                     />
                                                 </TableCell>
                                                 <TableCell sx={{ py: 0.5 }}>{row.grower_name || "-"}</TableCell>
-                                                <TableCell sx={{ py: 0.5 }}>{row.block_name || "-"}</TableCell>
+                                                <TableCell sx={{ py: 0.5 }}>{row.block_display || "-"}</TableCell>
                                                 <TableCell align="right" sx={{ py: 0.5 }}>{row.bins ?? row.planned_bins ?? 0}</TableCell>
                                                 <TableCell sx={{ py: 0.5 }}>{row.laborContractorName || "-"}</TableCell>
                                                 <TableCell sx={{ py: 0.5 }}>{row.forkliftContractorName || "-"}</TableCell>
