@@ -21,6 +21,8 @@ const STATUS_LABELS = {
 
 export const ProcessPlanCard = memo(function ProcessPlanCard({ plan, index, onEdit, onView }) {
     const { _card } = plan;
+
+    console.log('ProcessPlanCard plan:', plan);
     
     // Simplified handlers without useCallback to avoid dependency issues
     const handleEditClick = () => onEdit && onEdit(plan);

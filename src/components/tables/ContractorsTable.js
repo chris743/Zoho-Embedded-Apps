@@ -185,6 +185,7 @@ export default function ContractorsTable({ rows, loading, search, setSearch, onR
                         <TableRow sx={{ height: '36px' }}>
                             <TableCell sx={{ py: 0.5, fontWeight: 600, fontSize: '0.875rem' }}>ID</TableCell>
                             <TableCell sx={{ py: 0.5, fontWeight: 600, fontSize: '0.875rem' }}>Company Name</TableCell>
+                            <TableCell sx={{ py: 0.5, fontWeight: 600, fontSize: '0.875rem' }}>Color</TableCell>
                             <TableCell sx={{ py: 0.5, fontWeight: 600, fontSize: '0.875rem' }}>Primary Contact</TableCell>
                             <TableCell sx={{ py: 0.5, fontWeight: 600, fontSize: '0.875rem' }}>Phone Numbers</TableCell>
                             <TableCell sx={{ py: 0.5, fontWeight: 600, fontSize: '0.875rem' }}>Address</TableCell>
@@ -195,13 +196,13 @@ export default function ContractorsTable({ rows, loading, search, setSearch, onR
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={7} align="center">
+                                <TableCell colSpan={8} align="center">
                                     <Typography color="text.secondary">Loading contractors...</Typography>
                                 </TableCell>
                             </TableRow>
                         ) : filteredData.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} align="center">
+                                <TableCell colSpan={8} align="center">
                                     <Typography color="text.secondary">No contractors match the selected filters</Typography>
                                 </TableCell>
                             </TableRow>
@@ -220,6 +221,25 @@ export default function ContractorsTable({ rows, loading, search, setSearch, onR
                                     </TableCell>
                                     <TableCell sx={{ py: 0.5, fontWeight: 600 }}>
                                         {contractor.name || "-"}
+                                    </TableCell>
+                                    <TableCell sx={{ py: 0.5 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            {contractor.color && (
+                                                <Box
+                                                    sx={{
+                                                        width: 24,
+                                                        height: 24,
+                                                        borderRadius: '4px',
+                                                        backgroundColor: contractor.color,
+                                                        border: '1px solid rgba(0, 0, 0, 0.12)',
+                                                        flexShrink: 0
+                                                    }}
+                                                />
+                                            )}
+                                            <Typography variant="body2" sx={{ fontSize: '0.8rem', color: contractor.color || 'text.secondary' }}>
+                                                {contractor.color || "-"}
+                                            </Typography>
+                                        </Box>
                                     </TableCell>
                                     <TableCell sx={{ py: 0.5 }}>
                                         {contractor.primary_contact_name || "-"}

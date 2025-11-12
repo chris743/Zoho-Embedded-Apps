@@ -42,7 +42,7 @@ public class HarvestContractorsController : ControllerBase
             .Take(take)
             .Select(c => new HarvestContractorDto(
                 c.id, c.name, c.primary_contact_name, c.primary_contact_phone, c.office_phone,
-                c.mailing_address, c.provides_trucking, c.provides_picking, c.provides_forklift))
+                c.mailing_address, c.provides_trucking, c.provides_picking, c.provides_forklift, c.color))
             .ToListAsync(ct);
 
         return Ok(rows);
@@ -59,7 +59,7 @@ public class HarvestContractorsController : ControllerBase
 
         return new HarvestContractorDto(
             c.id, c.name, c.primary_contact_name, c.primary_contact_phone, c.office_phone,
-            c.mailing_address, c.provides_trucking, c.provides_picking, c.provides_forklift);
+            c.mailing_address, c.provides_trucking, c.provides_picking, c.provides_forklift, c.color);
     }
 
     // POST /api/v1/HarvestContractors
@@ -79,7 +79,8 @@ public class HarvestContractorsController : ControllerBase
             mailing_address = input.mailing_address,
             provides_trucking = input.provides_trucking,
             provides_picking = input.provides_picking,
-            provides_forklift = input.provides_forklift
+            provides_forklift = input.provides_forklift,
+            color = input.color
         };
 
         _db.HarvestContractors.Add(entity);
@@ -88,7 +89,7 @@ public class HarvestContractorsController : ControllerBase
         var dto = new HarvestContractorDto(
             entity.id, entity.name, entity.primary_contact_name, entity.primary_contact_phone,
             entity.office_phone, entity.mailing_address,
-            entity.provides_trucking, entity.provides_picking, entity.provides_forklift);
+            entity.provides_trucking, entity.provides_picking, entity.provides_forklift, entity.color);
 
         return CreatedAtAction(nameof(Get), new { id = entity.id, version = "1" }, dto);
     }
@@ -110,6 +111,7 @@ public class HarvestContractorsController : ControllerBase
         c.provides_trucking = input.provides_trucking ?? c.provides_trucking;
         c.provides_picking = input.provides_picking ?? c.provides_picking;
         c.provides_forklift = input.provides_forklift ?? c.provides_forklift;
+        c.color = input.color ?? c.color;
 
         await _db.SaveChangesAsync(ct);
         return NoContent();

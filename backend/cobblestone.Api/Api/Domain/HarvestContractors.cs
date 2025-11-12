@@ -14,5 +14,6 @@ public class HarvestContractor
     public bool? provides_trucking { get; set; }
     public bool? provides_picking { get; set; }
     public bool? provides_forklift { get; set; }
+    public string? color { get; set; }
    
 }

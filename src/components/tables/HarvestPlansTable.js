@@ -29,6 +29,24 @@ const formatDate = (iso) => {
     } catch { return iso; }
 };
 
+// Convert hex color to rgba with opacity
+const hexToRgba = (hex, opacity = 0.2) => {
+    if (!hex) return undefined;
+    // Remove # if present
+    const cleanHex = hex.replace('#', '');
+    // Handle 3-digit hex
+    const r = cleanHex.length === 3 
+        ? parseInt(cleanHex[0] + cleanHex[0], 16)
+        : parseInt(cleanHex.substring(0, 2), 16);
+    const g = cleanHex.length === 3
+        ? parseInt(cleanHex[1] + cleanHex[1], 16)
+        : parseInt(cleanHex.substring(2, 4), 16);
+    const b = cleanHex.length === 3
+        ? parseInt(cleanHex[2] + cleanHex[2], 16)
+        : parseInt(cleanHex.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
+
 // Export function for filtered data
 const exportToCSV = (data, filename = "harvest-plans") => {
     // Filter out total rows and prepare data for export
@@ -324,9 +342,7 @@ export function HarvestPlansTable({
         commodity: "",
         grower: "",
         block: "",
-        contractor: "",
-        forklift: "",
-        hauler: "",
+        anyContractor: "",
         deliverTo: "",
         fieldRep: ""
     });
@@ -399,6 +415,9 @@ export function HarvestPlansTable({
                 forkliftContractorName: forklift?.name ?? forklift?.NAME ?? "",
                 truckingContractorName: hauler?.name ?? hauler?.NAME ?? "",
                 fieldRepresentativeName: fieldRep?.fullName || fieldRep?.full_name || fieldRep?.username || "",
+                laborContractorColor: labor?.color,
+                forkliftContractorColor: forklift?.color,
+                truckingContractorColor: hauler?.color,
                 isPlaceholder
             };
         });
@@ -408,18 +427,17 @@ export function HarvestPlansTable({
         const o = {
             commodity: new Set(),
             grower: new Set(),
-            contractor: new Set(),
-            forklift: new Set(),
-            hauler: new Set(),
+            anyContractor: new Set(),
             deliverTo: new Set(),
             fieldRep: new Set(),
         };
         for (const r of data) {
             if (r.commodityName) o.commodity.add(r.commodityName);
             if (r.grower_name) o.grower.add(r.grower_name);
-            if (r.laborContractorName) o.contractor.add(r.laborContractorName);
-            if (r.forkliftContractorName) o.forklift.add(r.forkliftContractorName);
-            if (r.truckingContractorName) o.hauler.add(r.truckingContractorName);
+            // Combine all contractors from all three columns
+            if (r.laborContractorName) o.anyContractor.add(r.laborContractorName);
+            if (r.forkliftContractorName) o.anyContractor.add(r.forkliftContractorName);
+            if (r.truckingContractorName) o.anyContractor.add(r.truckingContractorName);
             if (r.deliver_to) o.deliverTo.add(r.deliver_to);
             if (r.fieldRepresentativeName) o.fieldRep.add(r.fieldRepresentativeName);
         }
@@ -427,9 +445,7 @@ export function HarvestPlansTable({
         return {
             commodity: sort(o.commodity),
             grower: sort(o.grower),
-            contractor: sort(o.contractor),
-            forklift: sort(o.forklift),
-            hauler: sort(o.hauler),
+            anyContractor: sort(o.anyContractor),
             deliverTo: sort(o.deliverTo),
             fieldRep: sort(o.fieldRep),
         };
@@ -441,9 +457,10 @@ export function HarvestPlansTable({
         const filtered = data.filter((r) =>
             (filters.commodity === "" || r.commodityName === filters.commodity) &&
             (filters.grower === "" || r.grower_name === filters.grower) &&
-            (filters.contractor === "" || r.laborContractorName === filters.contractor) &&
-            (filters.forklift === "" || r.forkliftContractorName === filters.forklift) &&
-            (filters.hauler === "" || r.truckingContractorName === filters.hauler) &&
+            (filters.anyContractor === "" || 
+                r.laborContractorName === filters.anyContractor ||
+                r.forkliftContractorName === filters.anyContractor ||
+                r.truckingContractorName === filters.anyContractor) &&
             (filters.deliverTo === "" || r.deliver_to === filters.deliverTo) &&
             (filters.fieldRep === "" || r.fieldRepresentativeName === filters.fieldRep) &&
             (blkNeedle === "" || (r.block_name || "").toLowerCase().includes(blkNeedle))
@@ -491,7 +508,7 @@ export function HarvestPlansTable({
         setFilters((prev) => ({ ...prev, [field]: value }));
 
     const clearAllFilters = () =>
-        setFilters({ commodity: "", grower: "", block: "", contractor: "", forklift: "", hauler: "", deliverTo: "", fieldRep: "" });
+        setFilters({ commodity: "", grower: "", block: "", anyContractor: "", deliverTo: "", fieldRep: "" });
 
     return (
         <Paper sx={{ width: "100%", overflow: "hidden" }}>
@@ -594,38 +611,14 @@ export function HarvestPlansTable({
                     />
 
                     <FormControl size="small" sx={{ minWidth: 150 }}>
-                        <InputLabel>Labor Contractor</InputLabel>
+                        <InputLabel>Contractor (Any Role)</InputLabel>
                         <Select
-                            value={filters.contractor}
-                            label="Labor Contractor"
-                            onChange={(e) => handleFilterChange("contractor", e.target.value)}
+                            value={filters.anyContractor}
+                            label="Contractor (Any Role)"
+                            onChange={(e) => handleFilterChange("anyContractor", e.target.value)}
                         >
                             <MenuItem value="">All</MenuItem>
-                            {filterOptions.contractor.map((v) => <MenuItem key={v} value={v}>{v}</MenuItem>)}
-                        </Select>
-                    </FormControl>
-
-                    <FormControl size="small" sx={{ minWidth: 150 }}>
-                        <InputLabel>Forklift</InputLabel>
-                        <Select
-                            value={filters.forklift}
-                            label="Forklift"
-                            onChange={(e) => handleFilterChange("forklift", e.target.value)}
-                        >
-                            <MenuItem value="">All</MenuItem>
-                            {filterOptions.forklift.map((v) => <MenuItem key={v} value={v}>{v}</MenuItem>)}
-                        </Select>
-                    </FormControl>
-
-                    <FormControl size="small" sx={{ minWidth: 150 }}>
-                        <InputLabel>Hauler</InputLabel>
-                        <Select
-                            value={filters.hauler}
-                            label="Hauler"
-                            onChange={(e) => handleFilterChange("hauler", e.target.value)}
-                        >
-                            <MenuItem value="">All</MenuItem>
-                            {filterOptions.hauler.map((v) => <MenuItem key={v} value={v}>{v}</MenuItem>)}
+                            {filterOptions.anyContractor.map((v) => <MenuItem key={v} value={v}>{v}</MenuItem>)}
                         </Select>
                     </FormControl>
                     <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -763,15 +756,39 @@ export function HarvestPlansTable({
                                                         {row.bins ?? row.planned_bins ?? 0}
                                                     </Typography>
                                                 </Box>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <Box 
+                                                    sx={{ 
+                                                        display: 'flex', 
+                                                        justifyContent: 'space-between',
+                                                        backgroundColor: row.laborContractorColor ? hexToRgba(row.laborContractorColor, 0.2) : 'transparent',
+                                                        p: 0.5,
+                                                        borderRadius: 1
+                                                    }}
+                                                >
                                                     <Typography variant="body2" color="text.secondary">Labor:</Typography>
                                                     <Typography variant="body2" sx={{ fontWeight: 500 }}>{row.laborContractorName || "-"}</Typography>
                                                 </Box>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <Box 
+                                                    sx={{ 
+                                                        display: 'flex', 
+                                                        justifyContent: 'space-between',
+                                                        backgroundColor: row.forkliftContractorColor ? hexToRgba(row.forkliftContractorColor, 0.2) : 'transparent',
+                                                        p: 0.5,
+                                                        borderRadius: 1
+                                                    }}
+                                                >
                                                     <Typography variant="body2" color="text.secondary">Forklift:</Typography>
                                                     <Typography variant="body2" sx={{ fontWeight: 500 }}>{row.forkliftContractorName || "-"}</Typography>
                                                 </Box>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <Box 
+                                                    sx={{ 
+                                                        display: 'flex', 
+                                                        justifyContent: 'space-between',
+                                                        backgroundColor: row.truckingContractorColor ? hexToRgba(row.truckingContractorColor, 0.2) : 'transparent',
+                                                        p: 0.5,
+                                                        borderRadius: 1
+                                                    }}
+                                                >
                                                     <Typography variant="body2" color="text.secondary">Hauler:</Typography>
                                                     <Typography variant="body2" sx={{ fontWeight: 500 }}>{row.truckingContractorName || "-"}</Typography>
                                                 </Box>
@@ -881,9 +898,30 @@ export function HarvestPlansTable({
                                                 <TableCell sx={{ py: 0.5 }}>{row.grower_name || "-"}</TableCell>
                                                 <TableCell sx={{ py: 0.5 }}>{row.block_display || "-"}</TableCell>
                                                 <TableCell align="right" sx={{ py: 0.5 }}>{row.bins ?? row.planned_bins ?? 0}</TableCell>
-                                                <TableCell sx={{ py: 0.5 }}>{row.laborContractorName || "-"}</TableCell>
-                                                <TableCell sx={{ py: 0.5 }}>{row.forkliftContractorName || "-"}</TableCell>
-                                                <TableCell sx={{ py: 0.5 }}>{row.truckingContractorName || "-"}</TableCell>
+                                                <TableCell 
+                                                    sx={{ 
+                                                        py: 0.5,
+                                                        backgroundColor: row.laborContractorColor ? hexToRgba(row.laborContractorColor, 0.2) : 'transparent'
+                                                    }}
+                                                >
+                                                    {row.laborContractorName || "-"}
+                                                </TableCell>
+                                                <TableCell 
+                                                    sx={{ 
+                                                        py: 0.5,
+                                                        backgroundColor: row.forkliftContractorColor ? hexToRgba(row.forkliftContractorColor, 0.2) : 'transparent'
+                                                    }}
+                                                >
+                                                    {row.forkliftContractorName || "-"}
+                                                </TableCell>
+                                                <TableCell 
+                                                    sx={{ 
+                                                        py: 0.5,
+                                                        backgroundColor: row.truckingContractorColor ? hexToRgba(row.truckingContractorColor, 0.2) : 'transparent'
+                                                    }}
+                                                >
+                                                    {row.truckingContractorName || "-"}
+                                                </TableCell>
                                                 <TableCell sx={{ py: 0.5 }}>{row.deliver_to || "-"}</TableCell>
                                                 <TableCell sx={{ py: 0.5 }}>{row.fieldRepresentativeName || "-"}</TableCell>
                                                 <TableCell sx={{ py: 0.5 }}>

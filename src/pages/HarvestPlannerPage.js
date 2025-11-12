@@ -16,7 +16,8 @@ import { ContractorsApi } from "../api/contractors";
 import { CommoditiesApi } from "../api/commodities";
 import { ScoutReportsApi } from "../api/scoutReports";
 import { UsersApi } from "../api/auth";
-import { WeeklyProcessBoard } from "../components/planners/processPlanner/WeeklyProcessBoard";
+import { BinsReceivedApi } from "../api/binsReceived";
+import { WeeklyPlannerBoard } from "../components/planners/WeeklyPlannerComponents/WeeklyPlannerBoard";
 import { WeekPicker } from "../components/WeekPicker";
 import { DateRangePicker } from "../components/DateRangePicker";
 import ViewPlanDialog from "../components/harvestPlanViewModal/HarvestPlanViewModal";
@@ -88,6 +89,7 @@ export default function HarvestPlannerPage() {
     const commoditiesSvc = useMemo(() => CommoditiesApi(api), [api]);
     const scoutReportsSvc = useMemo(() => ScoutReportsApi(api), [api]);
     const usersSvc = useMemo(() => UsersApi(api), [api]);
+    const binsReceivedSvc = useMemo(() => BinsReceivedApi(api), [api]);
 
 
     const [toast, setToast] = useState(null);
@@ -105,6 +107,7 @@ export default function HarvestPlannerPage() {
     const [pools, setPools] = useState([]);
     const [commodities, setCommodities] = useState(null);
     const [fieldRepresentatives, setFieldRepresentatives] = useState([]);
+    const [binsReceived, setBinsReceived] = useState([]);
 
     // Force table view on mobile, otherwise allow user choice
     const [view, setView] = useState("table");
@@ -160,15 +163,21 @@ export default function HarvestPlannerPage() {
             setFieldRepresentatives(fieldReps);
         } catch (err) { console.warn("Field representatives load failed", err); }
     };
-    
-    const load = async () => {
-        setLoading(true);
+
+    const load = async (showLoading = true) => {
+        if (showLoading) {
+            setLoading(true);
+        }
         try {
             const { data } = await svc.list({ take: 10000 });
             const arr = Array.isArray(data) ? data : (data?.items || data?.value || data?.$values || Object.values(data || {}));
             setRows(arr);
         } catch (err) { console.error(err); setToast(err?.message || "Failed to load plans"); }
-        finally { setLoading(false); }
+        finally { 
+            if (showLoading) {
+                setLoading(false);
+            }
+        }
     };
 
     const handleDateRangeChange = (startDate, endDate) => {
@@ -201,6 +210,47 @@ export default function HarvestPlannerPage() {
     const handleError = (message) => {
         setToast(message);
     };
+
+    // Helper functions for week calculations (Sunday start)
+    const startOfWeekFunc = (date) => {
+        const d = new Date(date);
+        const day = d.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const diff = d.getDate() - day; // Sunday start
+        return new Date(d.setDate(diff));
+    };
+
+    const addDays = (date, days) => {
+        const result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return result;
+    };
+
+    const getWeekRange = (weekStartDate) => {
+        const start = startOfWeekFunc(weekStartDate);
+        const end = addDays(start, 6);
+        return { start, end };
+    };
+
+    const loadBinsReceived = async () => {
+        try {
+            // Get the week range for the current weekStart
+            const weekRange = getWeekRange(weekStart);
+            const fromDate = weekRange.start.toISOString().split('T')[0];
+            const toDate = weekRange.end.toISOString().split('T')[0];
+            
+            const { data } = await binsReceivedSvc.list({
+                receiveDateFrom: fromDate,
+                receiveDateTo: toDate,
+                take: 10000
+            });
+            const arr = Array.isArray(data) ? data : (data?.items || data?.value || data?.$values || Object.values(data || {}));
+            setBinsReceived(arr);
+        } catch (err) {
+            console.warn("BinsReceived load failed", err);
+            setBinsReceived([]);
+        }
+    };
+
     // Only load data when authenticated and not loading
     useEffect(() => { 
         if (isAuthenticated && !authLoading) {
@@ -211,13 +261,21 @@ export default function HarvestPlannerPage() {
             loadContractors(); 
             loadCommodities();
             loadFieldRepresentatives();
+            loadBinsReceived();
         } else {
             console.log('⏳ Waiting for authentication - authenticated:', isAuthenticated, 'loading:', authLoading);
         }
     }, [isAuthenticated, authLoading]);
 
-// client-side filter by date range (inclusive) for table view
-const filteredTablePlans = rows.filter(r => {
+    // Reload bins received when week changes
+    useEffect(() => {
+        if (isAuthenticated && !authLoading && weekStart) {
+            loadBinsReceived();
+        }
+    }, [weekStart, isAuthenticated, authLoading]);
+
+    // client-side filter by date range (inclusive) for table view
+    const filteredTablePlans = rows.filter(r => {
     if (!r.date) return false;
     const planDate = new Date(r.date);
     const planDateOnly = new Date(planDate.getFullYear(), planDate.getMonth(), planDate.getDate());
@@ -233,33 +291,13 @@ const filteredTablePlans = rows.filter(r => {
     return true;
 }).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
-// Helper functions for week calculations (Sunday start)
-const startOfWeekFunc = (date) => {
-    const d = new Date(date);
-    const day = d.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const diff = d.getDate() - day; // Sunday start
-    return new Date(d.setDate(diff));
-};
-
-const addDays = (date, days) => {
-    const result = new Date(date);
-    result.setDate(result.getDate() + days);
-    return result;
-};
-
-const getWeekRange = (weekStartDate) => {
-    const start = startOfWeekFunc(weekStartDate);
-    const end = addDays(start, 6);
-    return { start, end };
-};
-
-// Separate filtering for weekly view (uses week range)
-const filteredWeeklyPlans = (() => {
+    // Separate filtering for weekly view (uses week range)
+    const filteredWeeklyPlans = useMemo(() => {
     const weekRange = getWeekRange(weekStart);
     const fromDate = weekRange.start;
     const toDate = weekRange.end;
     
-    const filtered = rows.filter(plan => {
+    return rows.filter(plan => {
         if (!plan.date) return false;
         const planDate = new Date(plan.date);
         const planDateOnly = new Date(planDate.getFullYear(), planDate.getMonth(), planDate.getDate());
@@ -274,15 +312,7 @@ const filteredWeeklyPlans = (() => {
         }
         return true;
     }).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-    
-    // Transform harvest plans to look like process plans for WeeklyProcessBoard
-    return filtered.map(plan => ({
-        ...plan,
-        run_date: plan.date, // Map date to run_date
-        gablockidx: plan.grower_block_id,
-        row_order: 0 // Harvest plans don't have row_order
-    }));
-})();
+}, [rows, weekStart]);
 
     // Show loading state while waiting for authentication
     if (authLoading) {
@@ -468,19 +498,19 @@ const filteredWeeklyPlans = (() => {
                 />
             </Paper>
         ) : (
-            <WeeklyProcessBoard
-                processPlans={filteredWeeklyPlans}
+            <WeeklyPlannerBoard
+                plans={filteredWeeklyPlans}
                 blocks={blocks}
-                pools={pools}
                 contractors={contractors}
                 commodities={commodities}
-                onEdit={(row) => {setEditRow(row); setDialogOpen(true);}}
-                onSuccess={handleSuccess}
-                onError={handleError}
+                fieldRepresentatives={fieldRepresentatives}
+                binsReceived={binsReceived}
+                onEdit={(plan) => { setEditRow(plan); setDialogOpen(true); }}
+                onView={(plan) => { setViewRow(plan); setViewDialogOpen(true); }}
+                svc={svc}
                 weekStart={weekStart}
-                onProcessPlanUpdate={handlePlanUpdate}
-                apiService={svc}
-                fieldMapping={{ dateField: 'date', hasRowOrder: false }}
+                onPlanUpdate={handlePlanUpdate}
+                onRefresh={() => load(false)}
             />
         )}
     </Container>

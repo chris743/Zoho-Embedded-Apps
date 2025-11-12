@@ -12,12 +12,14 @@ export function WeeklyPlannerBoard({
   contractors = [],
   commodities = [],
   fieldRepresentatives = [],
+  binsReceived = [],
   onEdit,
   onView,
   svc,
   weekStart,
   onWeekChange,
   onPlanUpdate,
+  onRefresh,
 }) {
   const theme = useTheme();
   const actualIsMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -50,12 +52,60 @@ export function WeeklyPlannerBoard({
 
   // State management
   const [buckets, setBuckets] = useState({});
+  const isDraggingRef = useRef(false);
+  const lastPlansIdsRef = useRef(new Set());
+  const lastDayKeysRef = useRef([]);
 
-  // Build buckets when plans change
+  // Build buckets when plans change (but not during drag operations)
   useEffect(() => {
-    const newBuckets = buildBuckets(plans, dayKeys, lookupMaps);
-    setBuckets(newBuckets);
-  }, [plans, dayKeys, lookupMaps]);
+    if (!isDraggingRef.current) {
+      // Check if plans actually changed by comparing IDs
+      const currentPlanIds = new Set((plans || []).map(p => String(p.id)));
+      const lastPlanIds = lastPlansIdsRef.current;
+      
+      // Only process if plans actually changed
+      const plansChanged = currentPlanIds.size !== lastPlanIds.size ||
+        [...currentPlanIds].some(id => !lastPlanIds.has(id)) ||
+        [...lastPlanIds].some(id => !currentPlanIds.has(id));
+      
+      // Also check if dayKeys changed (week navigation)
+      const dayKeysStr = JSON.stringify(dayKeys);
+      const lastDayKeysStr = JSON.stringify(lastDayKeysRef.current);
+      const dayKeysChanged = dayKeysStr !== lastDayKeysStr;
+      
+      if (!plansChanged && !dayKeysChanged && lastPlanIds.size > 0) {
+        return; // No changes, skip update
+      }
+      
+      // Update refs
+      lastPlansIdsRef.current = currentPlanIds;
+      lastDayKeysRef.current = dayKeys;
+      
+      const newBuckets = buildBuckets(plans, dayKeys, lookupMaps, binsReceived);
+      
+      // Only update state if buckets actually changed
+      setBuckets(prevBuckets => {
+        // Quick comparison - check if structure changed
+        const prevKeys = Object.keys(prevBuckets).sort();
+        const newKeys = Object.keys(newBuckets).sort();
+        
+        if (prevKeys.length !== newKeys.length || 
+            !prevKeys.every(key => newKeys.includes(key))) {
+          return newBuckets;
+        }
+        
+        // Check if any bucket contents changed
+        const hasChanges = prevKeys.some(key => {
+          const prevPlans = prevBuckets[key] || [];
+          const newPlans = newBuckets[key] || [];
+          if (prevPlans.length !== newPlans.length) return true;
+          return prevPlans.some((p, i) => String(p.id) !== String(newPlans[i]?.id));
+        });
+        
+        return hasChanges ? newBuckets : prevBuckets;
+      });
+    }
+  }, [plans, dayKeys, lookupMaps, binsReceived]);
 
   // Event handlers
   const handleEdit = useCallback((plan) => {
@@ -68,10 +118,14 @@ export function WeeklyPlannerBoard({
 
   // DRAG AND DROP - SIMPLIFIED
   const handleDragStart = useCallback(() => {
-    // No need to set dragging state - just let it drag
+    isDraggingRef.current = true;
   }, []);
 
   const handleDragEnd = useCallback(async (result) => {
+    // Reset dragging flag after a short delay to allow state updates
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 100);
     
     if (!result.destination) return;
     
@@ -90,8 +144,12 @@ export function WeeklyPlannerBoard({
     const plan = plans.find(p => p.id === planId || p.id === Number(planId) || String(p.id) === planId);
     if (!plan) return;
     
-    // Store original buckets for potential revert
-    const originalBuckets = { ...buckets };
+    // Store original buckets for potential revert using functional update
+    let originalBuckets = {};
+    setBuckets(prev => {
+      originalBuckets = { ...prev };
+      return prev;
+    });
     
     // Optimistic update - immediately update UI
     setBuckets(prev => {
@@ -137,14 +195,19 @@ export function WeeklyPlannerBoard({
       await svc.update(updateId, { date: newDate });
       console.log('✅ API update successful');
       
+      // Success - refresh data quietly
+      if (onRefresh) {
+        await onRefresh();
+      }
+      
       // Update parent component state to reflect the change
       if (onPlanUpdate) {
         onPlanUpdate(updateId, { date: newDate });
       }
     } catch (err) {
       // Revert optimistic update on error
-      console.error("❌ Move failed:", err);
-      console.error("❌ Error details:", {
+      console.error(" Move failed:", err);
+      console.error(" Error details:", {
         status: err?.response?.status,
         statusText: err?.response?.statusText,
         data: err?.response?.data,
@@ -153,7 +216,7 @@ export function WeeklyPlannerBoard({
       setBuckets(originalBuckets);
       alert(err?.response?.data?.title || err?.message || 'Failed to move plan');
     }
-  }, [plans, svc, onPlanUpdate]);
+  }, [plans, svc, onPlanUpdate, onRefresh]);
 
   return (
     <MuiBox sx={{ 
@@ -168,7 +231,7 @@ export function WeeklyPlannerBoard({
       {isMobile && (
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
           <Typography variant="body2" color="text.secondary">
-            📱 Mobile View
+            Mobile View
           </Typography>
         </Stack>
       )}

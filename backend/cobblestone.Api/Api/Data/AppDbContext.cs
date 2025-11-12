@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<Pool> Pools => Set<Pool>();
     public DbSet<CommodityClass> Commodities => Set<CommodityClass>();
     public DbSet<PlaceholderGrower> PlaceholderGrowers => Set<PlaceholderGrower>();
+    public DbSet<BinsReceived> BinsReceived => Set<BinsReceived>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -33,6 +34,7 @@ public class AppDbContext : DbContext
             b.Property(x => x.primary_contact_phone).HasMaxLength(20).IsUnicode(false);
             b.Property(x => x.office_phone).HasMaxLength(20).IsUnicode(false);
             b.Property(x => x.mailing_address).HasMaxLength(100).IsUnicode(false);
+            b.Property(x => x.color).HasMaxLength(7).IsUnicode(false);
 
             // bit columns map to bool/bool? automatically
         });
@@ -126,6 +128,26 @@ public class AppDbContext : DbContext
             // Add index for better query performance
             b.HasIndex(x => x.is_active);
             b.HasIndex(x => new { x.grower_name, x.commodity_name });
+        });
+
+        modelBuilder.Entity<BinsReceived>(b =>
+        {
+            // Configure primary key first (required for views)
+            b.HasKey(x => x.InventoryIdx);
+            
+            // View in DM02 database - use fully qualified name for cross-database access
+            b.ToView("[DM02].[dbo].[VW_BINSRECEIVED]");
+
+            // Explicitly configure all properties used in queries
+            b.Property(x => x.source_database).HasMaxLength(20).IsUnicode(true);
+            b.Property(x => x.Commodity).HasMaxLength(100).IsUnicode(true);
+            b.Property(x => x.Style).HasMaxLength(100).IsUnicode(false);
+            b.Property(x => x.WHDesc).HasMaxLength(100).IsUnicode(true);
+            b.Property(x => x.NAME).HasMaxLength(200).IsUnicode(true);
+            b.Property(x => x.ReceiveDate);
+            b.Property(x => x.RecvQnt).HasColumnType("float"); // Explicitly map RecvQnt as float/double
+            b.Property(x => x.blockID).HasMaxLength(50).IsUnicode(true);
+            b.Property(x => x.poolID).HasMaxLength(50).IsUnicode(true);
         });
     }
 }

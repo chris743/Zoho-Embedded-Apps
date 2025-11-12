@@ -11,7 +11,8 @@ public record HarvestContractorDto(
     string? mailing_address,
     bool? provides_trucking,
     bool? provides_picking,
-    bool? provides_forklift
+    bool? provides_forklift,
+    string? color
 );
 
 public record HarvestContractorCreateDto(
@@ -22,7 +23,8 @@ public record HarvestContractorCreateDto(
     [MaxLength(100)] string? mailing_address,
     bool? provides_trucking,
     bool? provides_picking,
-    bool? provides_forklift
+    bool? provides_forklift,
+    [MaxLength(7)] string? color
 );
 
 public record HarvestContractorUpdateDto(
@@ -33,5 +35,6 @@ public record HarvestContractorUpdateDto(
     [MaxLength(100)] string? mailing_address,
     bool? provides_trucking,
     bool? provides_picking,
-    bool? provides_forklift
+    bool? provides_forklift,
+    [MaxLength(7)] string? color
 );

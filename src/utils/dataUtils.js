@@ -64,23 +64,101 @@ export function createCommodityMap(commodities) {
     return buildCommodityMap(commodities, false); // Include all sources, not just cobblestone
 }
 
+// Build a map of received bins by blockID and date
+// Supports multiple blockID formats: blockID (string) can match Block.ID or Block.GABLOCKIDX (as string)
+export function buildReceivedBinsMap(binsReceived, dayKeys) {
+    const map = new Map(); // key: `${blockID}:${date}` -> total received bins
+    
+    for (const bin of binsReceived || []) {
+        const blockID = bin.blockID ?? bin.blockId;
+        const receiveDate = bin.ReceiveDate ?? bin.receiveDate;
+        const recvQnt = bin.RecvQnt ?? bin.recvQnt ?? 0;
+        
+        if (blockID && receiveDate) {
+            const blockIDStr = String(blockID); // Normalize to string
+            const dateStr = toYMD(new Date(receiveDate));
+            const key = `${blockIDStr}:${dateStr}`;
+            
+            const currentTotal = map.get(key) || 0;
+            map.set(key, currentTotal + (recvQnt || 0));
+        }
+    }
+    
+    return map;
+}
+
 // Plan enrichment utilities - updated for new data structure
-export function enrichPlan(plan, { contractors, fieldRepresentatives = new Map() }) {
+export function enrichPlan(plan, { contractors, fieldRepresentatives = new Map(), receivedBinsMap = new Map() }) {
     const contractor = contractors.get(plan.contractor_id ?? -1);
     const fieldRep = fieldRepresentatives.get(plan.field_representative_id);
     const block = plan.block;
     const commodity = plan.commodity;
 
+    // Check if this is a placeholder block
+    const isPlaceholder = plan.grower_block_source_database === "PLACEHOLDER" && plan.grower_block_id === 999999;
+    
+    // Extract placeholder grower name from notes if it exists
+    let placeholderGrowerName = '';
+    let placeholderCommodityName = '';
+    
+    if (isPlaceholder && plan.notes_general) {
+        const placeholderMatch = plan.notes_general.match(/PLACEHOLDER GROWER: ([^|]+) \| COMMODITY: ([^\n]+)/);
+        if (placeholderMatch) {
+            placeholderGrowerName = placeholderMatch[1].trim();
+            placeholderCommodityName = placeholderMatch[2].trim();
+        }
+    }
+
+    // For placeholder blocks, use the placeholder grower name instead of 999999
+    const blockName = isPlaceholder && placeholderGrowerName 
+        ? placeholderGrowerName 
+        : (block?.name ?? `${plan.grower_block_id}`);
+    
+    const growerName = isPlaceholder && placeholderGrowerName 
+        ? placeholderGrowerName 
+        : (block?.growerName ?? "");
+    
+    // For placeholder blocks, use the placeholder commodity name if available
+    const commodityName = isPlaceholder && placeholderCommodityName
+        ? placeholderCommodityName
+        : (commodity?.commodity || commodity?.invoiceCommodity || "");
+
+    // Get received bins for this block and date
+    // BinsReceived.blockID (string) can match Block.ID (string) or Block.GABLOCKIDX (int, converted to string)
+    // Try both Block.ID and Block.GABLOCKIDX to match with receivings
+    const planDate = plan.date ? toYMD(new Date(plan.date)) : null;
+    
+    let receivedBins = null;
+    if (planDate && block) {
+        // Try matching with Block.ID (string field) first
+        if (block.ID) {
+            const key1 = `${String(block.ID)}:${planDate}`;
+            const bins1 = receivedBinsMap.get(key1);
+            if (bins1 !== undefined) { // Map has this key (even if value is 0)
+                receivedBins = bins1;
+            }
+        }
+        
+        // Also try matching with Block.GABLOCKIDX (int field, converted to string) if Block.ID didn't match
+        if (receivedBins === null && block.GABLOCKIDX != null) {
+            const key2 = `${String(block.GABLOCKIDX)}:${planDate}`;
+            const bins2 = receivedBinsMap.get(key2);
+            if (bins2 !== undefined) { // Map has this key (even if value is 0)
+                receivedBins = bins2;
+            }
+        }
+    }
+
     return {
         ...plan,
         _card: {
-            blockName: block?.name ?? `${plan.grower_block_id}`,
+            blockName: blockName,
             strippedBlockname: block?.name,
             blockID: block?.id,
-            estimatedBins: block?.acres, // Using acres as estimated bins
-            growerName: block?.growerName,
-            grower: block?.growerName ?? "",
-            commodityName: commodity?.commodity || commodity?.invoiceCommodity || "",
+            estimatedBins: receivedBins != null ? receivedBins : block?.acres, // Use received bins if available, otherwise acres
+            growerName: growerName,
+            grower: growerName,
+            commodityName: commodityName,
             commodityIdx: null, // No longer needed with new structure
             contractorName: contractor?.name ?? contractor?.NAME ?? "",
             fieldRepresentativeName: fieldRep?.fullName || fieldRep?.full_name || fieldRep?.username || "",
@@ -114,7 +192,7 @@ export function enrichProcessPlan(plan, { blocks, pools, contractors, commoditie
 }
 
 // Bucket building utilities
-export function buildBuckets(plans, dayKeys, lookupMaps) {
+export function buildBuckets(plans, dayKeys, lookupMaps, binsReceived = []) {
     const buckets = {};
 
     // Initialize empty buckets
@@ -122,13 +200,17 @@ export function buildBuckets(plans, dayKeys, lookupMaps) {
         buckets[key] = [];
     }
 
+    // Build received bins map
+    const receivedBinsMap = buildReceivedBinsMap(binsReceived, dayKeys);
+
     // Populate buckets with enriched plans
     for (const plan of plans || []) {
         const ymd = toYMD(plan.date);
         if (buckets[ymd]) {
             buckets[ymd].push(enrichPlan(plan, { 
                 contractors: lookupMaps.contractors,
-                fieldRepresentatives: lookupMaps.fieldRepresentatives || new Map()
+                fieldRepresentatives: lookupMaps.fieldRepresentatives || new Map(),
+                receivedBinsMap: receivedBinsMap
             }));
         }
     }
@@ -195,7 +277,7 @@ export function formatBinInfo(planned, actual, estimatedBins) {
     const parts = [];
     if (planned != null) parts.push(`Planned: ${planned}`);
     if (actual != null) parts.push(`Actual: ${actual}`);
-    if (estimatedBins != null) parts.push(`Remaining: ${estimatedBins}`)
+    if (estimatedBins != null) parts.push(`Received: ${estimatedBins}`)
     return parts.join(" · ");
 }
 

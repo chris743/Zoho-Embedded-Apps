@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Stack, TextField } from "@mui/material";
+import { Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Stack, TextField, Box, InputAdornment } from "@mui/material";
 
 
 export default function ContractorFormDialog({ open, initial, onClose, onSubmit, notify }) {
-const [model, setModel] = useState({ name: "", provides_trucking: false, provides_picking: false, provides_forklift: false });
+const [model, setModel] = useState({ name: "", provides_trucking: false, provides_picking: false, provides_forklift: false, color: "" });
 const isEdit = !!initial;
 
 
 useEffect(() => {
-setModel(initial ? { ...initial } : { name: "", provides_trucking: false, provides_picking: false, provides_forklift: false });
+setModel(initial ? { ...initial } : { name: "", provides_trucking: false, provides_picking: false, provides_forklift: false, color: "" });
 }, [initial, open]);
 
 
@@ -30,6 +30,62 @@ return (
 <TextField label="Office Phone" value={model.office_phone || ""} onChange={(e) => setModel({ ...model, office_phone: e.target.value })} />
 </Stack>
 <TextField label="Mailing Address" value={model.mailing_address || ""} onChange={(e) => setModel({ ...model, mailing_address: e.target.value })} />
+<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+    <TextField 
+        label="Color" 
+        value={model.color || "#000000"} 
+        onChange={(e) => setModel({ ...model, color: e.target.value })} 
+        size="small"
+        sx={{ flex: 1 }}
+        InputProps={{
+            startAdornment: (
+                <InputAdornment position="start">
+                    <Box
+                        component="label"
+                        sx={{
+                            position: 'relative',
+                            display: 'inline-block',
+                            cursor: 'pointer',
+                            width: 20,
+                            height: 20,
+                            borderRadius: '50%',
+                            border: '1px solid rgba(0, 0, 0, 0.23)',
+                            overflow: 'hidden',
+                        }}
+                    >
+                        <input
+                            type="color"
+                            value={model.color || "#FFFFFF"}
+                            onChange={(e) => setModel({ ...model, color: e.target.value })}
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: 0,
+                                margin: 0,
+                                appearance: 'none',
+                                WebkitAppearance: 'none',
+                                MozAppearance: 'none',
+                            }}
+                        />
+                        <style>{`
+                            input[type="color"]::-webkit-color-swatch-wrapper {
+                                padding: 0;
+                            }
+                            input[type="color"]::-webkit-color-swatch {
+                                border: none;
+                            }
+                            input[type="color"]::-moz-color-swatch {
+                                border: none;
+                            }
+                        `}</style>
+                    </Box>
+                </InputAdornment>
+            ),
+        }}
+    />
+</Box>
 <Stack direction={{ xs: "column", sm: "row" }}>
 <FormControlLabel control={<Checkbox checked={!!model.provides_trucking} onChange={(e) => setModel({ ...model, provides_trucking: e.target.checked })} />} label="Provides Trucking" />
 <FormControlLabel control={<Checkbox checked={!!model.provides_picking} onChange={(e) => setModel({ ...model, provides_picking: e.target.checked })} />} label="Provides Picking" />

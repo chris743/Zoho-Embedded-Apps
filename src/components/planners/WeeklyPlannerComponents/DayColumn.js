@@ -13,7 +13,7 @@ export const DayColumn = memo(({ ymd, dateObj, cards, onEdit, onView, isWeekend,
       border: isMobile ? '2px solid' : '1px solid',
       borderColor: isMobile ? 'primary.300' : 'grey.200',
       bgcolor: isMobile ? 'primary.50' : (isWeekend ? 'grey.25' : 'white'),
-      overflow: 'hidden',
+      overflow: 'visible',
       boxShadow: isMobile ? 2 : 'none'
     }}
   >

@@ -62,6 +62,7 @@ export default function HarvestContractorsPage() {
                     provides_trucking: !!model.provides_trucking,
                     provides_picking: !!model.provides_picking,
                     provides_forklift: !!model.provides_forklift,
+                    color: model.color || null,
                 });
                 setToast("Contractor updated successfully");
             } else {
@@ -74,6 +75,7 @@ export default function HarvestContractorsPage() {
                     provides_trucking: !!model.provides_trucking,
                     provides_picking: !!model.provides_picking,
                     provides_forklift: !!model.provides_forklift,
+                    color: model.color || null,
                 });
                 setToast(`Contractor created successfully #${data.id}`);
             }

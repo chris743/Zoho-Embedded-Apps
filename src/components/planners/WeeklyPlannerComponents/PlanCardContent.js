@@ -1,13 +1,10 @@
-import { Button, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import { PlanTitle } from "./PlanTitle";
 import { PlanDetails } from "./PlanDetails";
-import { ContractorInfo } from "./ContractorInfo";
-import { FieldRepresentativeInfo } from "./FieldRepresentativeInfo";
 import { memo } from "react";
 
 export const PlanCardContent = memo(({ plan, editClick, viewClick }) => {
   const { _card } = plan;
-  
   
   return (
     <Stack spacing={1.2}>
@@ -18,16 +15,6 @@ export const PlanCardContent = memo(({ plan, editClick, viewClick }) => {
         actualBins={plan.bins}
         estimatedBins={_card.estimatedBins}
       />
-      {_card.contractorName && (
-        <ContractorInfo name={_card.contractorName} />
-      )}
-      {_card.fieldRepresentativeName && (
-        <FieldRepresentativeInfo name={_card.fieldRepresentativeName} />
-      )}
-        <Stack direction="row" spacing = '0.8rem' sx={{justifyContent: "center"}}>
-            <Button onClick={editClick} size="small" variant="outlined" color="secondary">Edit</Button>
-            <Button onClick={viewClick} size="small" variant="outlined" color="primary">View</Button>
-        </Stack>
     </Stack>
   );
 });
