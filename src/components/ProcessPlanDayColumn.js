@@ -19,6 +19,6 @@ export const ProcessPlanDayColumn = memo(({ ymd, dateObj, cards, onEdit, onView,
     <DayHeader dateObj={dateObj} isWeekend={isWeekend} />
     <ProcessPlanDropZone ymd={ymd} cards={cards} onEdit={onEdit} onView={onView} />
   </Paper>
-); // Remove memo comparison temporarily to debug
+)); // Remove memo comparison temporarily to debug
 
 ProcessPlanDayColumn.displayName = 'ProcessPlanDayColumn';

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { HarvestPlansTable } from "../components/tables/HarvestPlansTable";
-import { Box, Button, Container, Stack, TextField, Snackbar, ToggleButtonGroup, ToggleButton, Paper, Typography, Divider, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Button, Container, Stack, TextField, Snackbar, ToggleButtonGroup, ToggleButton, Paper, Typography, Divider, useMediaQuery, useTheme, FormControl, InputLabel, Select, MenuItem, Chip, Checkbox } from "@mui/material";
 import { useViewMode } from "../contexts/ViewModeContext";
 import { DataGrid } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
@@ -112,6 +112,9 @@ export default function HarvestPlannerPage() {
     // Force table view on mobile, otherwise allow user choice
     const [view, setView] = useState("table");
     const effectiveView = isMobile ? "table" : view;
+
+    // Filters
+    const [selectedCommodities, setSelectedCommodities] = useState([]);
 
 
     // Blocks cache for the Block picker (source_database + GABLOCKIDX)
@@ -233,11 +236,19 @@ export default function HarvestPlannerPage() {
 
     const loadBinsReceived = async () => {
         try {
-            // Get the week range for the current weekStart
-            const weekRange = getWeekRange(weekStart);
-            const fromDate = weekRange.start.toISOString().split('T')[0];
-            const toDate = weekRange.end.toISOString().split('T')[0];
-            
+            let fromDate, toDate;
+
+            if (view === "table") {
+                // For table view, use the date range picker dates
+                fromDate = dateFrom ? dateFrom.toISOString().split('T')[0] : null;
+                toDate = dateTo ? dateTo.toISOString().split('T')[0] : null;
+            } else {
+                // For column view, use the week range
+                const weekRange = getWeekRange(weekStart);
+                fromDate = weekRange.start.toISOString().split('T')[0];
+                toDate = weekRange.end.toISOString().split('T')[0];
+            }
+
             const { data } = await binsReceivedSvc.list({
                 receiveDateFrom: fromDate,
                 receiveDateTo: toDate,
@@ -267,19 +278,19 @@ export default function HarvestPlannerPage() {
         }
     }, [isAuthenticated, authLoading]);
 
-    // Reload bins received when week changes
+    // Reload bins received when week changes, date range changes, or view changes
     useEffect(() => {
-        if (isAuthenticated && !authLoading && weekStart) {
+        if (isAuthenticated && !authLoading) {
             loadBinsReceived();
         }
-    }, [weekStart, isAuthenticated, authLoading]);
+    }, [weekStart, dateFrom, dateTo, view, isAuthenticated, authLoading]);
 
     // client-side filter by date range (inclusive) for table view
     const filteredTablePlans = rows.filter(r => {
     if (!r.date) return false;
     const planDate = new Date(r.date);
     const planDateOnly = new Date(planDate.getFullYear(), planDate.getMonth(), planDate.getDate());
-    
+
     if (dateFrom) {
         const fromDateOnly = new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate());
         if (planDateOnly < fromDateOnly) return false;
@@ -288,6 +299,13 @@ export default function HarvestPlannerPage() {
         const toDateOnly = new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate());
         if (planDateOnly > toDateOnly) return false;
     }
+
+    // Commodity filter
+    if (selectedCommodities.length > 0) {
+        const planCommodity = r.commodity?.commodity || r.commodity?.name;
+        if (!planCommodity || !selectedCommodities.includes(planCommodity)) return false;
+    }
+
     return true;
 }).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
@@ -296,12 +314,12 @@ export default function HarvestPlannerPage() {
     const weekRange = getWeekRange(weekStart);
     const fromDate = weekRange.start;
     const toDate = weekRange.end;
-    
+
     return rows.filter(plan => {
         if (!plan.date) return false;
         const planDate = new Date(plan.date);
         const planDateOnly = new Date(planDate.getFullYear(), planDate.getMonth(), planDate.getDate());
-        
+
         if (fromDate) {
             const fromDateOnly = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
             if (planDateOnly < fromDateOnly) return false;
@@ -310,9 +328,33 @@ export default function HarvestPlannerPage() {
             const toDateOnly = new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate());
             if (planDateOnly > toDateOnly) return false;
         }
+
+        // Commodity filter
+        if (selectedCommodities.length > 0) {
+            const planCommodity = plan.commodity?.commodity || plan.commodity?.name;
+            if (!planCommodity || !selectedCommodities.includes(planCommodity)) return false;
+        }
+
         return true;
     }).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-}, [rows, weekStart]);
+}, [rows, weekStart, selectedCommodities]);
+
+    // Get unique commodity names from harvest plans
+    const availableCommodities = useMemo(() => {
+        const commoditySet = new Set();
+        rows.forEach(plan => {
+            const commodityName = plan.commodity?.commodity || plan.commodity?.name;
+            if (commodityName) commoditySet.add(commodityName);
+        });
+        return Array.from(commoditySet).sort();
+    }, [rows]);
+
+    // Clear filters function
+    const clearFilters = () => {
+        setSelectedCommodities([]);
+    };
+
+    const hasActiveFilters = selectedCommodities.length > 0;
 
     // Show loading state while waiting for authentication
     if (authLoading) {
@@ -447,6 +489,52 @@ export default function HarvestPlannerPage() {
                             Column View
                         </ToggleButton>
                     </ToggleButtonGroup>
+                )}
+            </Stack>
+
+            {/* Filters Section */}
+            <Divider sx={{ my: 2 }} />
+            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+                {/* Commodity Filter */}
+                <FormControl size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel id="commodity-filter-label">Filter by Commodity</InputLabel>
+                    <Select
+                        labelId="commodity-filter-label"
+                        multiple
+                        value={selectedCommodities}
+                        onChange={(e) => setSelectedCommodities(e.target.value)}
+                        label="Filter by Commodity"
+                        renderValue={(selected) => (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                {selected.map((value) => (
+                                    <Chip key={value} label={value} size="small" />
+                                ))}
+                            </Box>
+                        )}
+                    >
+                        {availableCommodities.map((commodity) => (
+                            <MenuItem key={commodity} value={commodity}>
+                                <Checkbox
+                                    checked={selectedCommodities.indexOf(commodity) > -1}
+                                    size="small"
+                                />
+                                {commodity}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+
+                {hasActiveFilters && (
+                    <Button
+                        size="small"
+                        onClick={clearFilters}
+                        sx={{
+                            textTransform: 'none',
+                            fontWeight: 500
+                        }}
+                    >
+                        Clear Filters
+                    </Button>
                 )}
             </Stack>
         </Paper>

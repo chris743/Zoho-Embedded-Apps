@@ -3,7 +3,7 @@ import { DayColumn } from "./DayColumn";
 import { Box } from "@mui/material";
 // No dateUtils imports needed since we're working with dayKeys directly
 
-export const WeekGrid = memo(({ dayKeys, buckets, isMobile, onEdit, onView }) => {
+export const WeekGrid = memo(({ dayKeys, buckets, isMobile, onEdit, onView, onCopyFromPrevious }) => {
   // Convert dayKeys back to Date objects for the grid
   const days = dayKeys ? dayKeys.map(ymd => new Date(ymd + "T00:00:00")) : [];
   
@@ -30,7 +30,7 @@ export const WeekGrid = memo(({ dayKeys, buckets, isMobile, onEdit, onView }) =>
         const isWeekend = getDayOfWeek(day) === 0 || getDayOfWeek(day) === 6;
         
         return (
-          <DayColumn 
+          <DayColumn
             key={ymd}
             ymd={ymd}
             dateObj={day}
@@ -39,6 +39,7 @@ export const WeekGrid = memo(({ dayKeys, buckets, isMobile, onEdit, onView }) =>
             onView={onView}
             isWeekend={isWeekend}
             isMobile={isMobile}
+            onCopyFromPrevious={onCopyFromPrevious}
           />
         );
       })}

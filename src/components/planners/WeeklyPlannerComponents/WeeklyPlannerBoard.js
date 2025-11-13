@@ -5,6 +5,7 @@ import { useViewMode } from "../../../contexts/ViewModeContext";
 import { startOfWeek, sevenDays, toYMD } from "../../../utils/dateUtils";
 import { createBlockMap, createContractorMap, createCommodityMap, buildBuckets } from "../../../utils/dataUtils";
 import { WeekGrid } from "./WeekGrid";
+import CopyHarvestPlansDialog from "./CopyHarvestPlansDialog";
 
 export function WeeklyPlannerBoard({
   plans = [],
@@ -55,6 +56,7 @@ export function WeeklyPlannerBoard({
   const isDraggingRef = useRef(false);
   const lastPlansIdsRef = useRef(new Set());
   const lastDayKeysRef = useRef([]);
+  const [copyDialogState, setCopyDialogState] = useState({ open: false, targetDate: null });
 
   // Build buckets when plans change (but not during drag operations)
   useEffect(() => {
@@ -115,6 +117,56 @@ export function WeeklyPlannerBoard({
   const handleView = useCallback((plan) => {
     onView?.(plan);
   }, [onView]);
+
+  // Copy plans dialog handlers
+  const handleOpenCopyDialog = useCallback((targetDate) => {
+    setCopyDialogState({ open: true, targetDate });
+  }, []);
+
+  const handleCloseCopyDialog = useCallback(() => {
+    setCopyDialogState({ open: false, targetDate: null });
+  }, []);
+
+  const handleCopyPlans = useCallback(async (selectedPlans, targetDate) => {
+    try {
+      // Convert target date to ISO string
+      const targetDateISO = new Date(targetDate).toISOString();
+
+      // Create new plans for each selected plan
+      const createPromises = selectedPlans.map(async (plan) => {
+        const newPlanData = {
+          date: targetDateISO,
+          grower_block_source_database: plan.grower_block_source_database,
+          grower_block_id: plan.grower_block_id,
+          bins: plan.bins ?? plan.planned_bins,
+          planned_bins: plan.bins ?? plan.planned_bins,
+          contractor_id: plan.contractor_id,
+          forklift_contractor_id: plan.forklift_contractor_id,
+          hauler_id: plan.hauler_id,
+          pool_id: plan.pool_id,
+          deliver_to: plan.deliver_to,
+          field_representative_id: plan.field_representative_id,
+          notes_general: plan.notes_general,
+          notes_specific: plan.notes_specific
+        };
+
+        return svc.create(newPlanData);
+      });
+
+      await Promise.all(createPromises);
+
+      // Close dialog
+      handleCloseCopyDialog();
+
+      // Refresh data
+      if (onRefresh) {
+        await onRefresh();
+      }
+    } catch (err) {
+      console.error('Failed to copy plans:', err);
+      alert(err?.response?.data?.title || err?.message || 'Failed to copy plans');
+    }
+  }, [svc, onRefresh, handleCloseCopyDialog]);
 
   // DRAG AND DROP - SIMPLIFIED
   const handleDragStart = useCallback(() => {
@@ -244,8 +296,18 @@ export function WeeklyPlannerBoard({
           isMobile={isMobile}
           onEdit={handleEdit}
           onView={handleView}
+          onCopyFromPrevious={handleOpenCopyDialog}
         />
       </DragDropContext>
+
+      {/* Copy Plans Dialog */}
+      <CopyHarvestPlansDialog
+        open={copyDialogState.open}
+        onClose={handleCloseCopyDialog}
+        targetDate={copyDialogState.targetDate}
+        allPlans={plans}
+        onCopyPlans={handleCopyPlans}
+      />
     </MuiBox>
   );
 }

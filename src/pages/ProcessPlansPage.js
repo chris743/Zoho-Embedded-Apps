@@ -10,7 +10,12 @@ import {
     FormControlLabel,
     Checkbox,
     Alert,
-    CircularProgress
+    CircularProgress,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    Chip
 } from '@mui/material';
 import {
     ViewList as TableViewIcon,
@@ -75,6 +80,7 @@ export default function ProcessPlansPage() {
     
     // Filters
     const [hideCompleted, setHideCompleted] = useState(false);
+    const [selectedCommodities, setSelectedCommodities] = useState([]);
     
     // Dialog state
     const [processPlanDialog, setProcessPlanDialog] = useState({ open: false, processPlan: null, isEdit: false });
@@ -92,7 +98,7 @@ export default function ProcessPlansPage() {
             if (!plan.run_date) return false;
             const planDate = new Date(plan.run_date);
             const planDateOnly = new Date(planDate.getFullYear(), planDate.getMonth(), planDate.getDate());
-            
+
             if (dateFrom) {
                 const fromDateOnly = new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate());
                 if (planDateOnly < fromDateOnly) return false;
@@ -102,30 +108,38 @@ export default function ProcessPlansPage() {
                 if (planDateOnly > toDateOnly) return false;
             }
             if (hideCompleted && plan.run_status === 'completed') return false;
+
+            // Commodity filter
+            if (selectedCommodities.length > 0) {
+                const planCommodity = plan.commodity?.commodity || plan.commodity?.name;
+                if (!planCommodity || !selectedCommodities.includes(planCommodity)) return false;
+            }
+
             return true;
         }).sort((a, b) => (a.run_date || '').localeCompare(b.run_date || ''));
-        
+
         console.log('ProcessPlansPage: Table filtering applied:', {
             totalPlans: processPlans.length,
             filteredPlans: filtered.length,
             dateFrom: dateFrom?.toISOString().split('T')[0],
-            dateTo: dateTo?.toISOString().split('T')[0]
+            dateTo: dateTo?.toISOString().split('T')[0],
+            selectedCommodities
         });
-        
+
         return filtered;
-    }, [processPlans, dateFrom, dateTo, hideCompleted]);
+    }, [processPlans, dateFrom, dateTo, hideCompleted, selectedCommodities]);
 
     // Separate filtering for weekly view (uses week range)
     const filteredWeeklyPlans = useMemo(() => {
         const weekRange = getWeekRange(weekStart);
         const fromDate = weekRange.start;
         const toDate = weekRange.end;
-        
+
         const filtered = processPlans.filter(plan => {
             if (!plan.run_date) return false;
             const planDate = new Date(plan.run_date);
             const planDateOnly = new Date(planDate.getFullYear(), planDate.getMonth(), planDate.getDate());
-            
+
             if (fromDate) {
                 const fromDateOnly = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
                 if (planDateOnly < fromDateOnly) return false;
@@ -135,19 +149,27 @@ export default function ProcessPlansPage() {
                 if (planDateOnly > toDateOnly) return false;
             }
             if (hideCompleted && plan.run_status === 'completed') return false;
+
+            // Commodity filter
+            if (selectedCommodities.length > 0) {
+                const planCommodity = plan.commodity?.commodity || plan.commodity?.name;
+                if (!planCommodity || !selectedCommodities.includes(planCommodity)) return false;
+            }
+
             return true;
         }).sort((a, b) => (a.run_date || '').localeCompare(b.run_date || ''));
-        
+
         console.log('ProcessPlansPage: Weekly filtering applied:', {
             totalPlans: processPlans.length,
             filteredPlans: filtered.length,
             fromDate: fromDate?.toISOString().split('T')[0],
             toDate: toDate?.toISOString().split('T')[0],
-            weekStart: weekStart?.toISOString().split('T')[0]
+            weekStart: weekStart?.toISOString().split('T')[0],
+            selectedCommodities
         });
-        
+
         return filtered;
-    }, [processPlans, weekStart, getWeekRange, hideCompleted]);
+    }, [processPlans, weekStart, getWeekRange, hideCompleted, selectedCommodities]);
 
     // Load data
     const loadProcessPlans = async () => {
@@ -300,9 +322,20 @@ export default function ProcessPlansPage() {
 
     const clearFilters = () => {
         setHideCompleted(false);
+        setSelectedCommodities([]);
     };
 
-    const hasActiveFilters = hideCompleted;
+    const hasActiveFilters = hideCompleted || selectedCommodities.length > 0;
+
+    // Get unique commodity names from processPlans
+    const availableCommodities = useMemo(() => {
+        const commoditySet = new Set();
+        processPlans.forEach(plan => {
+            const commodityName = plan.commodity?.commodity || plan.commodity?.name;
+            if (commodityName) commoditySet.add(commodityName);
+        });
+        return Array.from(commoditySet).sort();
+    }, [processPlans]);
 
     return (
         <Container maxWidth={false} sx={{ py: 2, px: 3 }}>
@@ -387,6 +420,35 @@ export default function ProcessPlansPage() {
                         }
                         label="Hide Completed"
                     />
+
+                    {/* Commodity Filter */}
+                    <FormControl size="small" sx={{ minWidth: 200 }}>
+                        <InputLabel id="commodity-filter-label">Commodities</InputLabel>
+                        <Select
+                            labelId="commodity-filter-label"
+                            multiple
+                            value={selectedCommodities}
+                            onChange={(e) => setSelectedCommodities(e.target.value)}
+                            label="Commodities"
+                            renderValue={(selected) => (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {selected.map((value) => (
+                                        <Chip key={value} label={value} size="small" />
+                                    ))}
+                                </Box>
+                            )}
+                        >
+                            {availableCommodities.map((commodity) => (
+                                <MenuItem key={commodity} value={commodity}>
+                                    <Checkbox
+                                        checked={selectedCommodities.indexOf(commodity) > -1}
+                                        size="small"
+                                    />
+                                    {commodity}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
                     {hasActiveFilters && (
                         <Button
